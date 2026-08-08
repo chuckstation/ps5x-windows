@@ -1,0 +1,72 @@
+# PS5x configuration template
+# Copy to ps5x.toml and fill in your paths.
+#
+# IMPORTANT: PS5x does not supply, bundle, or download firmware.
+#            You must provide your own legally-obtained PS5 firmware.
+
+[emulator]
+# Path to your own PS5 firmware directory.  REQUIRED for most operations.
+firmware_path   = ""
+
+# Path to game content (/app0).  Set before loading an ELF.
+game_content    = ""
+
+# Directory for save data (/savedata).
+save_data       = "saves"
+
+# Log file path (empty = no file, stdout only).
+log_path        = "ps5x.log"
+
+# Minimum log level: trace | debug | info | warning | error | fatal | off
+log_level       = "info"
+
+# Echo log to stdout/stderr as well as the file.
+log_console     = true
+
+[graphics]
+# Renderer backend: dx12 | dx11 | vulkan | opengl | null
+backend         = "dx12"
+
+# Initial window / render resolution.
+width           = 1920
+height          = 1080
+
+fullscreen      = false
+vsync           = true
+
+# MSAA sample count: 1 (off) | 2 | 4 | 8
+msaa            = 1
+
+# Enable GPU validation layers (significant performance cost – debug only).
+validation      = false
+
+[input]
+# Primary input device: dualsense | ds4 | xbox | keyboard
+mode            = "dualsense"
+
+# Analog stick dead zone radius [0, 1].
+deadzone        = 0.10
+
+# Rumble motor strength [0, 1].
+rumble_strength = 1.0
+
+[audio]
+sample_rate     = 48000
+buffer_size     = 512
+master_volume   = 1.0
+
+[debug]
+# Enable the interactive debugger pane in the UI.
+enable_debugger = false
+
+# Dump translated shaders to disk (debug/shader-dump/).
+dump_shaders    = false
+
+# Log every emulated syscall (very verbose).
+trace_syscalls  = false
+
+# Write memory access logs (very slow).
+validate_memory = false
+
+# Directory for crash dumps and shader dumps.
+debug_dump_path = "debug"

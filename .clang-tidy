@@ -1,0 +1,50 @@
+# PS5x .clang-tidy configuration
+#
+# Enabled check families:
+#   bugprone-*        Common bug patterns
+#   cppcoreguidelines-* C++ Core Guidelines
+#   modernize-*       C++17/20 modernisation
+#   performance-*     Performance improvements
+#   readability-*     Code readability
+#
+# Disabled intentionally:
+#   -cppcoreguidelines-pro-type-reinterpret-cast   needed in renderer/kernel
+#   -cppcoreguidelines-pro-bounds-pointer-arithmetic needed in ELF parser
+#   -modernize-use-trailing-return-type            style choice
+
+Checks: >
+  bugprone-*,
+  cppcoreguidelines-*,
+  modernize-*,
+  performance-*,
+  readability-*,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -modernize-use-trailing-return-type,
+  -readability-magic-numbers,
+  -readability-identifier-length,
+  -cppcoreguidelines-pro-type-vararg,
+  -cppcoreguidelines-pro-type-union-access
+
+WarningsAsErrors: ''
+
+HeaderFilterRegex: 'source/ps5x/include/.*'
+
+CheckOptions:
+  - key: readability-identifier-naming.NamespaceCase
+    value: CamelCase
+  - key: readability-identifier-naming.ClassCase
+    value: CamelCase
+  - key: readability-identifier-naming.StructCase
+    value: CamelCase
+  - key: readability-identifier-naming.FunctionCase
+    value: CamelCase
+  - key: readability-identifier-naming.VariableCase
+    value: camelCase
+  - key: readability-identifier-naming.ParameterCase
+    value: camelCase
+  - key: readability-identifier-naming.MemberSuffix
+    value: '_'
+  - key: modernize-use-default-member-init.UseAssignment
+    value: '1'

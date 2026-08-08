@@ -1,0 +1,41 @@
+# Build directories
+build/
+build-*/
+_Build/
+
+# IDE / editor
+.vs/
+.vscode/
+*.suo
+*.user
+.idea/
+
+# CMake generated
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+install_manifest.txt
+*.cmake
+!cmake/*.cmake
+
+# Compiled outputs
+*.exe
+*.dll
+*.pdb
+*.lib
+*.a
+*.o
+*.obj
+
+# Runtime artefacts
+ps5x.log
+*.dmp
+crash_dumps/
+
+# Python / tools
+__pycache__/
+*.pyc
+
+# macOS
+.DS_Store

@@ -1,0 +1,29 @@
+# PS5x clang-format configuration
+# Based on Kyty's original .clang-format (preserved for compatibility)
+BasedOnStyle: LLVM
+IndentWidth: 4
+TabWidth: 4
+UseTab: ForContinuationAndIndentation
+ColumnLimit: 120
+BreakBeforeBraces: Allman
+AllowShortFunctionsOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AlwaysBreakTemplateDeclarations: Yes
+PointerAlignment: Left
+ReferenceAlignment: Left
+BreakConstructorInitializers: BeforeColon
+ConstructorInitializerIndentWidth: 4
+SortIncludes: CaseSensitive
+IncludeBlocks: Regroup
+IncludeCategories:
+  # Project headers first
+  - Regex:           '^"PS5x/'
+    Priority:        1
+  # Kyty headers
+  - Regex:           '^"(Kyty|Emulator)/'
+    Priority:        2
+  # Third-party
+  - Regex:           '^<'
+    Priority:        3
+SpaceAfterTemplateKeyword: false
+SpacesInAngles: false

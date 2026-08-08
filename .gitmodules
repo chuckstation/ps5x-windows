@@ -1,0 +1,5 @@
+[submodule "kyty-upstream"]
+	path = kyty-upstream
+	url = https://github.com/InoriRus/Kyty.git
+	branch = master
+	shallow = false
