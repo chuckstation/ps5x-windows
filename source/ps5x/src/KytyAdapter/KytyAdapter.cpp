@@ -7,8 +7,12 @@
 // MSVC + Kyty source present), calls are forwarded into Kyty subsystems.
 // Without Kyty, every function uses PS5x native implementations backed
 // by Win32 APIs — no stubs, no TODOs.
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
+#ifndef WIN32_LEAN_AND_MEAN
+#  define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#  define NOMINMAX
+#endif
 #include "PS5x/KytyAdapter/KytyAdapter.h"
 #include "PS5x/Logger/Logger.h"
 #include "PS5x/Memory/Memory.h"

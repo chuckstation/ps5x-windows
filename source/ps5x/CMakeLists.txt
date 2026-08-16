@@ -164,7 +164,9 @@ ps5x_target_compile_options(ps5x)
 
 if(WIN32)
   target_sources(ps5x PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/ps5x.rc")
-  set_target_properties(ps5x PROPERTIES MSVC_ENABLE_MANIFEST FALSE)
+  if(MSVC OR CMAKE_CXX_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+    target_link_options(ps5x PRIVATE "/MANIFEST:NO")
+  endif()
 endif()
 install(TARGETS ps5x DESTINATION bin)
 

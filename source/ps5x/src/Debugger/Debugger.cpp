@@ -8,8 +8,12 @@
 #include "PS5x/RuntimeEvents/RuntimeEvents.h"
 #include "PS5x/Logger/Logger.h"
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
+#ifndef WIN32_LEAN_AND_MEAN
+#  define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#  define NOMINMAX
+#endif
 #include <algorithm>
 #include <chrono>
 #include <cstring>

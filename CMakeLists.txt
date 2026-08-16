@@ -31,12 +31,9 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
 foreach(cfg Release RelWithDebInfo Debug)
   string(TOUPPER ${cfg} cfg_up)
-  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${cfg_up}
-      "${CMAKE_BINARY_DIR}/bin/${cfg}")
-  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${cfg_up}
-      "${CMAKE_BINARY_DIR}/bin/${cfg}")
-  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${cfg_up}
-      "${CMAKE_BINARY_DIR}/lib/${cfg}")
+  set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${cfg_up} "${CMAKE_BINARY_DIR}/bin/${cfg}")
+  set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${cfg_up} "${CMAKE_BINARY_DIR}/bin/${cfg}")
+  set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${cfg_up} "${CMAKE_BINARY_DIR}/lib/${cfg}")
 endforeach()
 
 # ── Options ───────────────────────────────────────────────────────────────────
