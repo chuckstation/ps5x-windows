@@ -732,8 +732,8 @@ std::string AddressToSymbol(uint64_t address)
 {
     auto sym = LookupSymbol(address);
     if (sym) return *sym;
-    auto near = NearestSymbol(address);
-    if (near) return near->name + "+0x" + std::to_string(near->offset);
+    auto nearSym = NearestSymbol(address);
+    if (nearSym) return nearSym->name + "+0x" + std::to_string(nearSym->offset);
     return "";
 }
 
