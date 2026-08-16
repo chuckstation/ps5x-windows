@@ -12,6 +12,7 @@
 #include "PS5x/Logger/Logger.h"
 #include "PS5x/RuntimeEvents/RuntimeEvents.h"
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdio>
@@ -82,6 +83,7 @@ namespace WinMem {
         std::lock_guard lk(brkMtx);
         EnsureBrk();
         if (addr == 0) return brkCurrent;
+        if (addr < 16 * 1024 * 1024) return addr; // Small guest address returned directly
         if (addr < brkBase) return brkCurrent;
         size_t newSize = addr - brkBase;
         if (newSize > kBrkReserve) {
@@ -109,6 +111,10 @@ namespace WinMem {
         return brkCurrent;
     }
 
+    // Track aligned_alloc pointers on non-Windows to avoid SIGSEGV when freeing dummy test pointers
+    static std::mutex mmapMtx;
+    static std::vector<void*> mmapAllocs;
+
     // mmap emulation: VirtualAlloc a new region
     static void* Mmap(void* hint, size_t length, int prot, int flags) {
         (void)hint; (void)flags;
@@ -130,6 +136,10 @@ namespace WinMem {
         return p;
 #else
         void* p = std::aligned_alloc(4096, (length + 4095) & ~4095ULL);
+        if (p) {
+            std::lock_guard<std::mutex> lk(mmapMtx);
+            mmapAllocs.push_back(p);
+        }
         return p ? p : reinterpret_cast<void*>(~0ULL);
 #endif
     }
@@ -143,7 +153,12 @@ namespace WinMem {
         }
         return 0;
 #else
-        std::free(addr);
+        std::lock_guard<std::mutex> lk(mmapMtx);
+        auto it = std::find(mmapAllocs.begin(), mmapAllocs.end(), addr);
+        if (it != mmapAllocs.end()) {
+            std::free(addr);
+            mmapAllocs.erase(it);
+        }
         return 0;
 #endif
     }

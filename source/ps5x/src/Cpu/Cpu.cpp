@@ -9,6 +9,11 @@
 //   CMOV (conditional move, 0F 4x),
 //   Two-byte Jcc near (0F 8x), RET imm16 (0xC2),
 //   LAHF / SAHF (0x9F / 0x9E).
+
+#if defined(__GNUC__) || defined(__clang__)
+#pragma GCC diagnostic ignored "-Wpedantic"
+#endif
+
 #include "PS5x/Cpu/Cpu.h"
 #include "PS5x/Logger/Logger.h"
 #include "PS5x/Memory/Memory.h"
@@ -80,6 +85,7 @@ static constexpr std::array<const char*, 16> kRegNames = {
 
 static bool GuestRead(uint64_t addr, void* dst, size_t n)
 {
+    if (!Memory::IsReadable(addr, n)) return false;
     auto hostPtr = reinterpret_cast<const void*>(addr);
     std::memcpy(dst, hostPtr, n);
     return true;
@@ -87,21 +93,20 @@ static bool GuestRead(uint64_t addr, void* dst, size_t n)
 
 static bool GuestWrite(uint64_t addr, const void* src, size_t n)
 {
+    if (!Memory::IsWritable(addr, n)) return false;
     auto hostPtr = reinterpret_cast<void*>(addr);
     std::memcpy(hostPtr, src, n);
     return true;
 }
 
 template<typename T>
-static T GuestRead(uint64_t addr) {
-    T v{};
-    GuestRead(addr, &v, sizeof(T));
-    return v;
+static bool GuestRead(uint64_t addr, T& val) {
+    return GuestRead(addr, &val, sizeof(T));
 }
 
 template<typename T>
-static void GuestWrite(uint64_t addr, T val) {
-    GuestWrite(addr, &val, sizeof(T));
+static bool GuestWrite(uint64_t addr, T val) {
+    return GuestWrite(addr, &val, sizeof(T));
 }
 
 // ── Flag update helpers ────────────────────────────────────────────────────
@@ -148,12 +153,41 @@ static void UpdateFlagsArith(CpuContext& ctx, uint64_t a, uint64_t b,
 static StepResult ExecuteOne(CpuState& st)
 {
     auto& ctx = st.ctx;
-    const uint8_t* ip = reinterpret_cast<const uint8_t*>(ctx.rip);
 
     if (ctx.rip == 0) {
         PS5X_ERROR("[Cpu] Null RIP – aborting");
         return StepResult::Fault;
     }
+
+    // Pre-fetch up to 32 bytes safely into local buffer padded with 0xF4 (HLT)
+    uint8_t code_buf[48];
+    std::fill(std::begin(code_buf), std::end(code_buf), 0xF4);
+
+    size_t page_offset = ctx.rip & 4095;
+    size_t first_chunk = std::min<size_t>(32, 4096 - page_offset);
+
+    if (Memory::IsReadable(ctx.rip, first_chunk)) {
+        std::memcpy(code_buf, reinterpret_cast<const void*>(ctx.rip), first_chunk);
+        if (first_chunk < 32) {
+            size_t second_chunk = 32 - first_chunk;
+            if (Memory::IsReadable(ctx.rip + first_chunk, second_chunk)) {
+                std::memcpy(code_buf + first_chunk, reinterpret_cast<const void*>(ctx.rip + first_chunk), second_chunk);
+            }
+        }
+    } else {
+        bool any = false;
+        for (size_t i = 0; i < 32; ++i) {
+            if (Memory::IsReadable(ctx.rip + i, 1)) {
+                code_buf[i] = *reinterpret_cast<const uint8_t*>(ctx.rip + i);
+                any = true;
+            } else {
+                break;
+            }
+        }
+        if (!any) return StepResult::Fault;
+    }
+
+    const uint8_t* ip = code_buf;
 
     // Breakpoint check
     if (!st.bpByAddr.empty()) {
@@ -221,8 +255,11 @@ static StepResult ExecuteOne(CpuState& st)
     case 0x50: case 0x51: case 0x52: case 0x53:
     case 0x54: case 0x55: case 0x56: case 0x57: {
         uint8_t reg = (opcode & 0x7) | (rex_b ? 8 : 0);
-        ctx.gpr[static_cast<size_t>(Reg::RSP)] -= 8;
-        GuestWrite<uint64_t>(ctx.gpr[static_cast<size_t>(Reg::RSP)], ctx.gpr[reg]);
+        uint64_t sp = ctx.gpr[static_cast<size_t>(Reg::RSP)] - 8;
+        if (!GuestWrite<uint64_t>(sp, ctx.gpr[reg])) {
+            ++st.stats.faults; return StepResult::Fault;
+        }
+        ctx.gpr[static_cast<size_t>(Reg::RSP)] = sp;
         Advance();
         break;
     }
@@ -231,7 +268,11 @@ static StepResult ExecuteOne(CpuState& st)
     case 0x58: case 0x59: case 0x5A: case 0x5B:
     case 0x5C: case 0x5D: case 0x5E: case 0x5F: {
         uint8_t reg = (opcode & 0x7) | (rex_b ? 8 : 0);
-        ctx.gpr[reg] = GuestRead<uint64_t>(ctx.gpr[static_cast<size_t>(Reg::RSP)]);
+        uint64_t val = 0;
+        if (!GuestRead<uint64_t>(ctx.gpr[static_cast<size_t>(Reg::RSP)], val)) {
+            ++st.stats.faults; return StepResult::Fault;
+        }
+        ctx.gpr[reg] = val;
         ctx.gpr[static_cast<size_t>(Reg::RSP)] += 8;
         Advance();
         break;
@@ -328,7 +369,8 @@ static StepResult ExecuteOne(CpuState& st)
             int32_t disp = 0;
             if (((modrm >> 6) & 3) == 1) { int8_t d; std::memcpy(&d, ip + off - 1, 1); ctx.rip++; disp = d; }
             uint64_t ea  = ctx.gpr[rm] + disp;
-            uint64_t b   = GuestRead<uint64_t>(ea);
+            uint64_t b = 0;
+            if (!GuestRead<uint64_t>(ea, b)) { ++st.stats.faults; return StepResult::Fault; }
             uint64_t a   = ctx.gpr[reg];
             uint64_t r   = a + b;
             UpdateFlagsArith(ctx, a, b, r, false, 64);
@@ -423,8 +465,11 @@ static StepResult ExecuteOne(CpuState& st)
             if (mod == 1) { int8_t d; std::memcpy(&d, ip + off, 1); off++; ctx.rip++; disp = d; }
             else if (mod == 2) { std::memcpy(&disp, ip + off, 4); off += 4; ctx.rip += 4; }
             uint64_t ea = ctx.gpr[rm] + disp;
-            if (rex_w) GuestWrite<uint64_t>(ea, ctx.gpr[reg]);
-            else       GuestWrite<uint32_t>(ea, static_cast<uint32_t>(ctx.gpr[reg]));
+            if (rex_w) {
+                if (!GuestWrite<uint64_t>(ea, ctx.gpr[reg])) { ++st.stats.faults; return StepResult::Fault; }
+            } else {
+                if (!GuestWrite<uint32_t>(ea, static_cast<uint32_t>(ctx.gpr[reg]))) { ++st.stats.faults; return StepResult::Fault; }
+            }
         }
         break;
     }
@@ -442,8 +487,15 @@ static StepResult ExecuteOne(CpuState& st)
             if (mod == 1) { int8_t d; std::memcpy(&d, ip + off, 1); off++; ctx.rip++; disp = d; }
             else if (mod == 2) { std::memcpy(&disp, ip + off, 4); off += 4; ctx.rip += 4; }
             uint64_t ea = ctx.gpr[rm] + disp;
-            ctx.gpr[reg] = rex_w ? GuestRead<uint64_t>(ea)
-                                  : static_cast<uint64_t>(GuestRead<uint32_t>(ea));
+            if (rex_w) {
+                uint64_t v = 0;
+                if (!GuestRead<uint64_t>(ea, v)) { ++st.stats.faults; return StepResult::Fault; }
+                ctx.gpr[reg] = v;
+            } else {
+                uint32_t v = 0;
+                if (!GuestRead<uint32_t>(ea, v)) { ++st.stats.faults; return StepResult::Fault; }
+                ctx.gpr[reg] = static_cast<uint64_t>(v);
+            }
         }
         break;
     }
@@ -502,8 +554,11 @@ static StepResult ExecuteOne(CpuState& st)
     case 0xE8: {
         int32_t rel; std::memcpy(&rel, ip + off, 4); off += 4;
         Advance();
-        ctx.gpr[static_cast<size_t>(Reg::RSP)] -= 8;
-        GuestWrite<uint64_t>(ctx.gpr[static_cast<size_t>(Reg::RSP)], ctx.rip);
+        uint64_t sp = ctx.gpr[static_cast<size_t>(Reg::RSP)] - 8;
+        if (!GuestWrite<uint64_t>(sp, ctx.rip)) {
+            ++st.stats.faults; return StepResult::Fault;
+        }
+        ctx.gpr[static_cast<size_t>(Reg::RSP)] = sp;
         CallFrame frame;
         frame.returnAddr = ctx.rip;
         frame.frameBase  = ctx.gpr[static_cast<size_t>(Reg::RBP)];
@@ -515,7 +570,10 @@ static StepResult ExecuteOne(CpuState& st)
     // RET  (0xC3)
     case 0xC3: {
         off++;
-        uint64_t retAddr = GuestRead<uint64_t>(ctx.gpr[static_cast<size_t>(Reg::RSP)]);
+        uint64_t retAddr = 0;
+        if (!GuestRead<uint64_t>(ctx.gpr[static_cast<size_t>(Reg::RSP)], retAddr)) {
+            ++st.stats.faults; return StepResult::Fault;
+        }
         ctx.gpr[static_cast<size_t>(Reg::RSP)] += 8;
         ctx.rip = retAddr;
         if (!st.callStack.empty()) st.callStack.pop_back();
@@ -526,7 +584,10 @@ static StepResult ExecuteOne(CpuState& st)
     case 0xC2: {
         uint16_t imm16; std::memcpy(&imm16, ip + off, 2); off += 2;
         off++;
-        uint64_t retAddr = GuestRead<uint64_t>(ctx.gpr[static_cast<size_t>(Reg::RSP)]);
+        uint64_t retAddr = 0;
+        if (!GuestRead<uint64_t>(ctx.gpr[static_cast<size_t>(Reg::RSP)], retAddr)) {
+            ++st.stats.faults; return StepResult::Fault;
+        }
         ctx.gpr[static_cast<size_t>(Reg::RSP)] += 8 + imm16;
         ctx.rip = retAddr;
         if (!st.callStack.empty()) st.callStack.pop_back();
@@ -796,8 +857,11 @@ static StepResult ExecuteOne(CpuState& st)
                 v = r;
             } else if (ext == 2) {
                 uint64_t target = ctx.gpr[rm];
-                ctx.gpr[static_cast<size_t>(Reg::RSP)] -= 8;
-                GuestWrite<uint64_t>(ctx.gpr[static_cast<size_t>(Reg::RSP)], ctx.rip);
+                uint64_t sp = ctx.gpr[static_cast<size_t>(Reg::RSP)] - 8;
+                if (!GuestWrite<uint64_t>(sp, ctx.rip)) {
+                    ++st.stats.faults; return StepResult::Fault;
+                }
+                ctx.gpr[static_cast<size_t>(Reg::RSP)] = sp;
                 CallFrame fr; fr.returnAddr = ctx.rip;
                 st.callStack.push_back(fr);
                 ctx.rip = target;

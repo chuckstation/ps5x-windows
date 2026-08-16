@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <cstring>
 #include <mutex>
 #include <unordered_map>
 #include <vector>
@@ -141,6 +142,8 @@ ModuleId Register(const std::string& name,
     desc.loaded      = true;
     desc.refCount    = 1;
     desc.loadTimeUs  = NowUs();
+    desc.baseAddr    = desc.elfInfo.imageBase;
+    desc.size        = desc.elfInfo.imageSize;
 
     // Extract exports from ELF symbol table
     for (const auto& sym : desc.elfInfo.symbols) {
@@ -165,6 +168,19 @@ ModuleId Register(const std::string& name,
 
     PS5X_INFO("[ModReg] Registered '%s' id=%u exports=%zu",
               name.c_str(), id, rs.modules[id].exports.size());
+    return id;
+}
+
+ModuleId Register(const ModuleDesc& desc)
+{
+    auto& rs = RegistryState::Get();
+    std::lock_guard lk(rs.mtx);
+    ModuleId id = desc.id != INVALID_MODULE ? desc.id : rs.nextId.fetch_add(1);
+    ModuleDesc m = desc;
+    m.id = id;
+    rs.modules[id] = m;
+    rs.byName[m.name] = id;
+    rs.loadOrder.push_back(id);
     return id;
 }
 
@@ -412,6 +428,11 @@ std::vector<ModuleDesc> GetAllModules()
         if (it != rs.modules.end()) out.push_back(it->second);
     }
     return out;
+}
+
+std::vector<ModuleDesc> GetAll()
+{
+    return GetAllModules();
 }
 
 std::vector<ModuleId> GetLoadOrder()

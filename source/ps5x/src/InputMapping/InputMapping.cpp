@@ -224,7 +224,7 @@ MappingProfile DefaultDualSenseProfile()
 //   deadzone=0.0
 //   inverted=false
 
-static std::string ProfilePath(const std::string& name)
+[[maybe_unused]] static std::string ProfilePath(const std::string& name)
 {
     auto& st = InputMappingState::Get();
     return (st.profileDir / (name + ".ini")).string();

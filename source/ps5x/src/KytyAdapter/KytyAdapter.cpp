@@ -94,7 +94,8 @@ bool Init()
     GPU::Init(nullptr);
 
     // Ensure audio subsystem is ready
-    Audio::Init();
+    Audio::AudioConfig acfg{};
+    Audio::Init(acfg);
 
     return true;
 #endif
@@ -281,9 +282,11 @@ bool InitAudio(uint32_t sampleRate, uint16_t channels, uint16_t bufferFrames)
     auto& nas = NativeAudioState::Get();
     nas.sampleRate = sampleRate;
     nas.channels   = channels;
-    auto port = Audio::OpenPort(Audio::PortType::Main,
-                                 static_cast<uint32_t>(channels),
-                                 sampleRate, Audio::SampleFormat::S16);
+    Audio::PortConfig pcfg;
+    pcfg.sampleRate = sampleRate;
+    pcfg.channels   = channels;
+    pcfg.format     = Audio::SampleFormat::Int16;
+    auto port = Audio::OpenPort(pcfg, [](void*, uint32_t){});
     nas.initialised = (port != Audio::INVALID_PORT);
     return nas.initialised;
 #endif

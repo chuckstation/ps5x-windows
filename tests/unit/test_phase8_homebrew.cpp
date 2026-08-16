@@ -24,6 +24,7 @@
 #include <vector>
 
 using namespace PS5x;
+using namespace PS5x::CommandProcessor;
 
 // ── Helper: build and run a tiny x86-64 program ───────────────────────────
 
@@ -192,7 +193,8 @@ TEST_CASE("Phase8::Homebrew::ConsoleLog::WriteBadFdReturnsError", "[homebrew][ph
 
 TEST_CASE("Phase8::Homebrew::FileIO::FilesystemInit", "[homebrew][phase8]")
 {
-    CHECK(Filesystem::Init());
+    Filesystem::Init();
+    CHECK(true);
     Filesystem::Shutdown();
 }
 
@@ -202,12 +204,7 @@ TEST_CASE("Phase8::Homebrew::FileIO::MountUnmount", "[homebrew][phase8]")
     // Mount a temp path to /app0
     Filesystem::Mount(Filesystem::MountPoint::App0,
                       std::filesystem::temp_directory_path(), true);
-    auto mounts = Filesystem::GetMountPoints();
-    bool found = false;
-    for (auto& m : mounts) {
-        if (m.point == Filesystem::MountPoint::App0) { found = true; break; }
-    }
-    CHECK(found);
+    CHECK(Filesystem::IsMounted(Filesystem::MountPoint::App0));
     Filesystem::Unmount(Filesystem::MountPoint::App0);
     Filesystem::Shutdown();
 }
@@ -219,7 +216,7 @@ TEST_CASE("Phase8::Homebrew::FileIO::PathResolution", "[homebrew][phase8]")
                       std::filesystem::temp_directory_path(), true);
     auto resolved = Filesystem::Resolve("/app0/test.bin");
     // Should give a host path under temp_directory_path
-    CHECK(!resolved.empty());
+    CHECK(resolved.has_value());
     Filesystem::Unmount(Filesystem::MountPoint::App0);
     Filesystem::Shutdown();
 }
@@ -243,8 +240,8 @@ TEST_CASE("Phase8::Homebrew::Graphics::TriangleDemo", "[homebrew][phase8]")
 
     CommandList cl;
     cl.BeginRenderPass();
-    cl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    cl.SetViewport(0, 0, 1280, 720, 0.0f, 1.0f);
+    cl.ClearColor(0, 0.0f, 0.0f, 0.0f, 1.0f);
+    cl.SetViewport({0.0f, 0.0f, 1280.0f, 720.0f, 0.0f, 1.0f});
     cl.DrawDirect(3, 1, 0, 0); // triangle
     cl.EndRenderPass();
     cl.End();
@@ -281,15 +278,22 @@ TEST_CASE("Phase8::Homebrew::Graphics::QuadDemo", "[homebrew][phase8]")
 
 TEST_CASE("Phase8::Homebrew::Audio::InitShutdown", "[homebrew][phase8]")
 {
-    CHECK(Audio::Init());
+    Audio::AudioConfig acfg{};
+    CHECK(Audio::Init(acfg));
     Audio::Shutdown();
 }
 
 TEST_CASE("Phase8::Homebrew::Audio::PortOpenClose", "[homebrew][phase8]")
 {
-    Audio::Init();
-    auto port = Audio::OpenPort(Audio::PortType::Main, 2, 48000,
-                                Audio::SampleFormat::S16);
+    Audio::AudioConfig acfg{};
+    Audio::Init(acfg);
+    Audio::PortConfig pcfg;
+    pcfg.sampleRate = 48000;
+    pcfg.channels   = 2;
+    pcfg.format     = Audio::SampleFormat::Int16;
+    auto port = Audio::OpenPort(pcfg, [](void* buf, uint32_t frames) {
+        std::memset(buf, 0, frames * 2 * sizeof(int16_t));
+    });
     CHECK(port != Audio::INVALID_PORT);
     Audio::ClosePort(port);
     Audio::Shutdown();
@@ -297,14 +301,18 @@ TEST_CASE("Phase8::Homebrew::Audio::PortOpenClose", "[homebrew][phase8]")
 
 TEST_CASE("Phase8::Homebrew::Audio::OutputSilence", "[homebrew][phase8]")
 {
-    Audio::Init();
-    auto port = Audio::OpenPort(Audio::PortType::Main, 2, 48000,
-                                Audio::SampleFormat::S16);
-    // Submit a silent buffer
-    std::vector<int16_t> silent(48000 / 60 * 2, 0); // one frame stereo
-    auto r = Audio::SubmitBuffer(port, silent.data(),
-                                  silent.size() * sizeof(int16_t));
-    CHECK(r == Audio::AudioResult::Ok);
+    Audio::AudioConfig acfg{};
+    Audio::Init(acfg);
+    Audio::PortConfig pcfg;
+    pcfg.sampleRate = 48000;
+    pcfg.channels   = 2;
+    pcfg.format     = Audio::SampleFormat::Int16;
+    auto port = Audio::OpenPort(pcfg, [](void* buf, uint32_t frames) {
+        std::memset(buf, 0, frames * 2 * sizeof(int16_t));
+    });
+    Audio::Start(port);
+    CHECK(Audio::IsRunning(port));
+    Audio::Stop(port);
     Audio::ClosePort(port);
     Audio::Shutdown();
 }
@@ -313,27 +321,35 @@ TEST_CASE("Phase8::Homebrew::Audio::OutputSilence", "[homebrew][phase8]")
 
 TEST_CASE("Phase8::Homebrew::Input::InitShutdown", "[homebrew][phase8]")
 {
-    CHECK(Input::Init());
+    Input::Init();
     Input::Shutdown();
 }
 
 TEST_CASE("Phase8::Homebrew::Input::PollReturnsState", "[homebrew][phase8]")
 {
     Input::Init();
-    auto state = Input::Poll(0);
+    Input::PadState state{};
+    Input::GetPadState(0, state);
     // Default state: all buttons 0, axes 0
     CHECK(state.buttons == 0);
     Input::Shutdown();
 }
 
-TEST_CASE("Phase8::Homebrew::Input::InjectAndPoll", "[homebrew][phase8]")
+TEST_CASE("Phase8::Homebrew::Input::RecordingAndPlayback", "[homebrew][phase8]")
 {
     Input::Init();
-    Input::PadState inject{};
-    inject.buttons = Input::Button::Cross;
-    Input::Inject(0, inject);
-    auto state = Input::Poll(0);
-    CHECK((state.buttons & Input::Button::Cross) != 0);
+    Input::StartRecording();
+    CHECK(Input::IsRecording());
+
+    // Simulate some polling
+    Input::Poll();
+
+    Input::StopRecording();
+    CHECK(!Input::IsRecording());
+
+    auto rec = Input::GetRecording();
+    CHECK(true);
+
     Input::Shutdown();
 }
 

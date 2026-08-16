@@ -37,6 +37,12 @@ static constexpr size_t kMaxLogLines  = 8192;
 static constexpr size_t kMaxRecent    = 20;
 
 struct UIState {
+    UIState() {
+        for (size_t i = 0; i < panels.size(); ++i) {
+            panels[i].panel = static_cast<Panel>(i);
+        }
+    }
+
     std::mutex mtx;
 
     // Phase 6
@@ -79,17 +85,17 @@ struct UIState {
 // ── Phase 6: Panel ────────────────────────────────────────────────────────
 const char* PanelName(Panel p) {
     switch (p) {
-        case Panel::ExecutionDashboard: return "ExecutionDashboard";
-        case Panel::RuntimeTimeline:    return "RuntimeTimeline";
-        case Panel::MemoryInspector:    return "MemoryInspector";
-        case Panel::GpuStatistics:      return "GpuStatistics";
-        case Panel::EventViewer:        return "EventViewer";
-        case Panel::ControllerMonitor:  return "ControllerMonitor";
-        case Panel::FilesystemBrowser:  return "FilesystemBrowser";
-        case Panel::PerformanceGraphs:  return "PerformanceGraphs";
-        case Panel::ThreadInspector:    return "ThreadInspector";
-        case Panel::ModuleViewer:       return "ModuleViewer";
-        case Panel::ShaderCacheViewer:  return "ShaderCacheViewer";
+        case Panel::ExecutionDashboard: return "Execution Dashboard";
+        case Panel::RuntimeTimeline:    return "Runtime Timeline";
+        case Panel::MemoryInspector:    return "Memory Inspector";
+        case Panel::GpuStatistics:      return "GPU Statistics";
+        case Panel::EventViewer:        return "Event Viewer";
+        case Panel::ControllerMonitor:  return "Controller Monitor";
+        case Panel::FilesystemBrowser:  return "Filesystem Browser";
+        case Panel::PerformanceGraphs:  return "Performance Graphs";
+        case Panel::ThreadInspector:    return "Thread Inspector";
+        case Panel::ModuleViewer:       return "Module Viewer";
+        case Panel::ShaderCacheViewer:  return "Shader Cache Viewer";
         default: return "Unknown";
     }
 }

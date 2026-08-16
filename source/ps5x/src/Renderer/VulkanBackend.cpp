@@ -47,9 +47,9 @@ public:
         (void)cfg;
         width_  = sc.width;
         height_ = sc.height;
-        hwnd_   = static_cast<HWND>(sc.nativeWindowHandle);
 
 #if defined(_WIN32)
+        hwnd_   = static_cast<HWND>(sc.nativeWindowHandle);
         HRESULT hr;
 
         // ── Debug layer (Debug builds) ────────────────────────────────────
@@ -273,7 +273,7 @@ public:
     const FrameStats&       Stats()       const override { return stats_; }
 
 private:
-    static constexpr UINT kFrameCount = 2;
+    static constexpr uint32_t kFrameCount = 2;
 
 #if defined(_WIN32)
     template<typename T>
@@ -572,6 +572,7 @@ std::unique_ptr<IRendererBackend> CreateBackend(Config::GraphicsBackend type)
         case Config::GraphicsBackend::DirectX11: return std::make_unique<DX11Backend>();
         case Config::GraphicsBackend::Vulkan:    return std::make_unique<VulkanBackend>();
         case Config::GraphicsBackend::Null:      return std::make_unique<NullBackend>();
+        case Config::GraphicsBackend::OpenGL:    return std::make_unique<NullBackend>();
         default: break;
     }
     PS5X_ERROR("[Renderer] Unknown backend type %u", static_cast<unsigned>(type));

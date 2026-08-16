@@ -343,7 +343,7 @@ bool SetThreadAffinity(KHandle h, uint64_t mask)
     auto& st = KernelState::Get();
     auto kt = st.Get<KThread>(h, KObjectType::Thread);
     if (!kt) return false;
-    kt->info.affinityMask = mask;
+    kt->attr.affinityMask = mask;
 #if defined(_WIN32)
     if (kt->osThread.native_handle()) {
         HANDLE hOsThread = static_cast<HANDLE>(kt->osThread.native_handle());

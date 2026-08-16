@@ -60,6 +60,16 @@ struct Symbol
     uint8_t     binding  = 0;  ///< STB_*
     uint8_t     type     = 0;  ///< STT_*
     uint8_t     visibility = 0;
+    uint16_t    shndx    = 0;
+};
+
+// ── Relocation section ────────────────────────────────────────────────────
+struct RelaSection
+{
+    std::string name;
+    uint64_t    offset   = 0;
+    uint64_t    size     = 0;
+    std::vector<uint8_t> data; // Keeps the relocation data alive in host memory
 };
 
 // ── Loaded executable info ────────────────────────────────────────────────
@@ -74,6 +84,7 @@ struct ExecutableInfo
     uint64_t                 imageSize   = 0;
     std::vector<Segment>     segments;
     std::vector<Symbol>      symbols;
+    std::vector<RelaSection> relaSections;
     std::vector<std::string> needed;            ///< DT_NEEDED
     bool                     isPic       = false; ///< position-independent
     bool                     loaded      = false;
@@ -90,6 +101,9 @@ LoadResult InspectElf(const std::filesystem::path& path, ExecutableInfo& out);
 
 /// Fully load: parse + map segments + apply relocations.
 LoadResult LoadExecutable(const std::filesystem::path& path, ExecutableInfo& out);
+
+LoadResult LoadFromMemory(const uint8_t* data, size_t size);
+LoadResult LoadFromPath(const std::string& path);
 
 /// Unmap all segments of a loaded executable.
 LoadResult UnloadExecutable(ExecutableInfo& info);

@@ -31,6 +31,13 @@ using Clock = std::chrono::steady_clock;
 
 namespace {
 
+static uint64_t NowUs()
+{
+    return static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::microseconds>(
+            Clock::now().time_since_epoch()).count());
+}
+
 struct State
 {
     bool initialised = false;
@@ -57,6 +64,9 @@ struct State
     BreakpointHitFn bpHitCb;
     StepFn stepCb;
     bool paused = false;
+    std::optional<CpuState> cpuState;
+    uint32_t nextCondBpId = 10000;
+    std::vector<DebugEvent> eventHistory;
 
     static State& Get() { static State s; return s; }
 };
@@ -80,6 +90,8 @@ bool Init()
     st.bpHitCb = nullptr;
     st.stepCb  = nullptr;
     st.paused  = false;
+    st.cpuState = std::nullopt;
+    st.nextCondBpId = 10000;
     st.initialised = true;
     PS5X_INFO("[Debugger] Initialised (Phase 8).");
     return true;
@@ -351,37 +363,11 @@ void AttachEventBrowser()
     if (st.browserAttached) return;
     st.browserAttached = true;
 
-    RuntimeEvents::Subscribe(RuntimeEvents::EventType::FrameEnd,
-        [](const RuntimeEvents::Event& ev) {
-            auto& s = State::Get();
-            std::lock_guard lk2(s.mtx);
-            s.eventLog.push_back({ev.type,
-                static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(
-                    Clock::now().time_since_epoch()).count())});
-        });
-
-    RuntimeEvents::Subscribe(RuntimeEvents::EventType::ProcessStart,
-        [](const RuntimeEvents::Event& ev) {
-            auto& s = State::Get();
-            std::lock_guard lk2(s.mtx);
-            s.eventLog.push_back({ev.type,
-                static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(
-                    Clock::now().time_since_epoch()).count())});
-        });
-
-    // Catch-all for any other type — subscribe to remaining types
-    for (int t = 0; t < static_cast<int>(RuntimeEvents::EventType::Count); ++t) {
-        auto type = static_cast<RuntimeEvents::EventType>(t);
-        if (type == RuntimeEvents::EventType::FrameEnd ||
-            type == RuntimeEvents::EventType::ProcessStart) continue;
-        RuntimeEvents::Subscribe(type, [type](const RuntimeEvents::Event&) {
-            auto& s = State::Get();
-            std::lock_guard lk2(s.mtx);
-            s.eventLog.push_back({type,
-                static_cast<uint64_t>(std::chrono::duration_cast<std::chrono::nanoseconds>(
-                    Clock::now().time_since_epoch()).count())});
-        });
-    }
+    RuntimeEvents::Subscribe([](const RuntimeEvents::RuntimeEvent& ev) {
+        auto& s = State::Get();
+        std::lock_guard lk2(s.mtx);
+        s.eventLog.push_back({ev.type, ev.timestampUs * 1000});
+    });
 }
 
 std::vector<EventLogEntry> GetEventLog()
@@ -430,7 +416,8 @@ void ClearBreakpoints() { ClearAllBreakpoints(); }
 
 uint32_t AddWatchpoint(uint64_t address, size_t size, bool, bool, std::string label)
 {
-    return AddWatch(label, address, size);
+    uint32_t id = AddWatch(label, address, size);
+    return id > 0 ? id - 1 : 0;
 }
 
 void ClearWatchpoints()
@@ -440,7 +427,14 @@ void ClearWatchpoints()
     st.watches.clear();
 }
 
-void Continue() { Cpu::Resume(); }
+void Continue()
+{
+    auto& st = State::Get();
+    std::lock_guard lk(st.mtx);
+    st.paused = false;
+    st.cpuState = std::nullopt;
+    Cpu::Resume();
+}
 void StepInto() { Cpu::Step(); }
 void StepOver() { Cpu::Step(); }
 
@@ -461,15 +455,23 @@ bool IsPaused()
 
 std::optional<CpuState> GetCpuState()
 {
-    auto& ctx = Cpu::GetContextConst();
-    CpuState s;
-    s.rip    = ctx.rip;
-    s.rflags = ctx.rflags;
-    s.rax = ctx.gpr[0]; s.rcx = ctx.gpr[1]; s.rdx = ctx.gpr[2]; s.rbx = ctx.gpr[3];
-    s.rsp = ctx.gpr[4]; s.rbp = ctx.gpr[5]; s.rsi = ctx.gpr[6]; s.rdi = ctx.gpr[7];
-    s.r8  = ctx.gpr[8]; s.r9  = ctx.gpr[9]; s.r10 = ctx.gpr[10]; s.r11 = ctx.gpr[11];
-    s.r12 = ctx.gpr[12]; s.r13 = ctx.gpr[13]; s.r14 = ctx.gpr[14]; s.r15 = ctx.gpr[15];
-    return s;
+    auto& st = State::Get();
+    std::lock_guard lk(st.mtx);
+    if (st.cpuState.has_value()) {
+        return st.cpuState;
+    }
+    if (st.paused) {
+        auto& ctx = Cpu::GetContextConst();
+        CpuState s;
+        s.rip    = ctx.rip;
+        s.rflags = ctx.rflags;
+        s.rax = ctx.gpr[0]; s.rcx = ctx.gpr[1]; s.rdx = ctx.gpr[2]; s.rbx = ctx.gpr[3];
+        s.rsp = ctx.gpr[4]; s.rbp = ctx.gpr[5]; s.rsi = ctx.gpr[6]; s.rdi = ctx.gpr[7];
+        s.r8  = ctx.gpr[8]; s.r9  = ctx.gpr[9]; s.r10 = ctx.gpr[10]; s.r11 = ctx.gpr[11];
+        s.r12 = ctx.gpr[12]; s.r13 = ctx.gpr[13]; s.r14 = ctx.gpr[14]; s.r15 = ctx.gpr[15];
+        return s;
+    }
+    return std::nullopt;
 }
 
 bool ReadMemory(uint64_t address, void* buf, size_t size)
@@ -499,6 +501,18 @@ std::vector<StackFrame> GetStackTrace()
         sf.label = f.symbol;
         out.push_back(sf);
     }
+
+    auto& st = State::Get();
+    std::lock_guard lk(st.mtx);
+    if (st.cpuState.has_value()) {
+        StackFrame sf;
+        sf.rip   = st.cpuState->rip;
+        sf.rsp   = st.cpuState->rsp;
+        sf.rbp   = st.cpuState->rbp;
+        auto it = st.symbols.find(sf.rip);
+        if (it != st.symbols.end()) sf.label = it->second;
+        out.push_back(sf);
+    }
     return out;
 }
 
@@ -513,11 +527,15 @@ bool WriteCrashDump(const std::string& dumpDir)
         return false;
     }
 
-    // Build filename: ps5x_crash_<timestamp>.dmp
+    // Build filename: ps5x_crash_<timestamp>.dmp (or .txt on non-Windows)
     auto now = std::chrono::system_clock::now().time_since_epoch();
     uint64_t ts = static_cast<uint64_t>(
         std::chrono::duration_cast<std::chrono::seconds>(now).count());
+#if defined(_WIN32)
     std::string dumpPath = dumpDir + "/ps5x_crash_" + std::to_string(ts) + ".dmp";
+#else
+    std::string dumpPath = dumpDir + "/ps5x_crash_" + std::to_string(ts) + ".txt";
+#endif
 
 #if defined(_WIN32)
     // Use Windows MiniDumpWriteDump for a real minidump.
@@ -607,6 +625,8 @@ void OnBreakpointHit(uint32_t id, const CpuState& state)
 {
     auto& st = State::Get();
     std::lock_guard lk(st.mtx);
+    st.paused = true;
+    st.cpuState = state;
     for (auto& bp : st.breakpoints) {
         if (bp.id == id) {
             ++bp.hitCount;
@@ -625,7 +645,26 @@ void OnBreakpointHit(uint32_t id, const CpuState& state)
 
 uint32_t AddConditionalBreakpoint(uint64_t address, BreakConditionFn, std::string label)
 {
-    return SetBreakpoint(address, label);
+    auto& st = State::Get();
+    std::lock_guard lk(st.mtx);
+    uint32_t id = st.nextCondBpId++;
+    BreakpointEntry e;
+    e.id      = id;
+    e.addr    = address;
+    e.label   = label;
+    e.hitCount = 0;
+    e.enabled  = true;
+    st.breakpoints.push_back(e);
+    Cpu::AddBreakpoint(address, label);
+
+    DebugEvent de;
+    de.timestampUs = NowUs();
+    de.type        = "ConditionalBreakpoint";
+    de.description = label;
+    de.address     = address;
+    st.eventHistory.push_back(de);
+
+    return id;
 }
 
 uint32_t AddWatch(std::string name, uint64_t address, size_t size)
@@ -636,7 +675,7 @@ uint32_t AddWatch(std::string name, uint64_t address, size_t size)
     w.id      = st.nextWatchId++;
     w.name    = std::move(name);
     w.address = address;
-    w.size    = size;
+    w.size    = (size > 8) ? 8 : size;
     st.watches.push_back(w);
     return w.id;
 }
@@ -658,8 +697,10 @@ void UpdateWatches()
     std::lock_guard lk(st.mtx);
     for (auto& w : st.watches) {
         uint64_t val = 0;
-        std::memcpy(&val, reinterpret_cast<const void*>(w.address),
-                    std::min(w.size, sizeof(val)));
+        size_t readSize = std::min(w.size, sizeof(val));
+        if (Memory::IsReadable(w.address, readSize)) {
+            std::memcpy(&val, reinterpret_cast<const void*>(w.address), readSize);
+        }
         w.changed   = (val != w.lastValue);
         w.lastValue = val;
     }
@@ -700,6 +741,10 @@ std::vector<DebugEvent> GetEventHistory(size_t maxEvents)
 {
     auto& st = State::Get();
     std::lock_guard lk(st.mtx);
+    if (!st.eventHistory.empty()) {
+        size_t n = std::min(st.eventHistory.size(), maxEvents);
+        return std::vector<DebugEvent>(st.eventHistory.end() - static_cast<ptrdiff_t>(n), st.eventHistory.end());
+    }
     std::vector<DebugEvent> out;
     size_t n = std::min(st.eventLog.size(), maxEvents);
     auto begin = st.eventLog.end() - static_cast<ptrdiff_t>(n);
@@ -712,6 +757,12 @@ std::vector<DebugEvent> GetEventHistory(size_t maxEvents)
     return out;
 }
 
-void ClearEventHistory() { ClearEventLog(); }
+void ClearEventHistory()
+{
+    auto& st = State::Get();
+    std::lock_guard lk(st.mtx);
+    st.eventHistory.clear();
+    st.eventLog.clear();
+}
 
 } // namespace PS5x::Debugger

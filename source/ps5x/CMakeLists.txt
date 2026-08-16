@@ -108,7 +108,7 @@ target_link_libraries(ps5x_debugger PUBLIC ps5x_logger ps5x_module_registry)
 
 # ── UI ───────────────────────────────────────────────────────────────────
 ps5x_module(ui src/UI/UI.cpp)
-target_link_libraries(ps5x_ui PUBLIC ps5x_logger ps5x_config)
+target_link_libraries(ps5x_ui PUBLIC ps5x_logger ps5x_config ps5x_perf_tools ps5x_cpu)
 
 # ── KytyAdapter ──────────────────────────────────────────────────────────
 ps5x_module(kyty_adapter src/KytyAdapter/KytyAdapter.cpp)
@@ -164,7 +164,7 @@ target_link_libraries(ps5x_kernel_runtime PUBLIC ps5x_logger ps5x_memory)
 ps5x_module(process src/Process/Process.cpp)
 target_link_libraries(ps5x_process PUBLIC
     ps5x_logger ps5x_memory ps5x_filesystem
-    ps5x_loader ps5x_kernel_runtime
+    ps5x_loader ps5x_kernel_runtime ps5x_syscalls ps5x_cpu
 )
 
 # ── Phase 4 modules ───────────────────────────────────────────────────────

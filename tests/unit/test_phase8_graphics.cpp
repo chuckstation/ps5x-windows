@@ -14,6 +14,7 @@
 using namespace PS5x;
 using namespace PS5x::GPU;
 using namespace PS5x::CommandProcessor;
+using namespace PS5x::ShaderCache;
 
 // ── GPU lifecycle ─────────────────────────────────────────────────────────
 
@@ -48,7 +49,7 @@ TEST_CASE("Phase8::Graphics::RenderTarget::SetAndGet", "[graphics][phase8]")
     rt.height = 1080;
     rt.format = PixelFormat::R8G8B8A8_Unorm;
     rt.pitch  = rt.width * 4;
-    GPU::SetRenderTarget(rt);
+    GPU::SetRenderTarget(0, rt);
     auto got = GPU::GetCurrentRenderTarget();
     CHECK(got.width  == 1920);
     CHECK(got.height == 1080);
@@ -74,9 +75,9 @@ TEST_CASE("Phase8::Graphics::Demo::Triangle::CommandListBuilds", "[graphics][pha
 
     CommandList cl;
     cl.BeginRenderPass();
-    cl.ClearColor(0.0f, 0.0f, 0.2f, 1.0f);
-    cl.SetViewport(0, 0, 1280, 720, 0.0f, 1.0f);
-    cl.SetScissor(0, 0, 1280, 720);
+    cl.ClearColor(0, 0.0f, 0.0f, 0.2f, 1.0f);
+    cl.SetViewport({0.0f, 0.0f, 1280.0f, 720.0f, 0.0f, 1.0f});
+    cl.SetScissor({0, 0, 1280, 720});
     cl.DrawDirect(3, 1, 0, 0);   // 3 vertices = triangle
     cl.EndRenderPass();
     cl.End();
@@ -93,7 +94,7 @@ TEST_CASE("Phase8::Graphics::Demo::Triangle::ProcesseswithoutCrash", "[graphics]
 
     CommandList cl;
     cl.BeginRenderPass();
-    cl.ClearColor(0.1f, 0.2f, 0.3f, 1.0f);
+    cl.ClearColor(0, 0.1f, 0.2f, 0.3f, 1.0f);
     cl.DrawDirect(3, 1, 0, 0);
     cl.EndRenderPass();
     cl.End();
@@ -102,7 +103,7 @@ TEST_CASE("Phase8::Graphics::Demo::Triangle::ProcesseswithoutCrash", "[graphics]
     auto before = CommandProcessor::GetStats();
     CommandProcessor::Process(cl);
     auto after = CommandProcessor::GetStats();
-    CHECK(after.commandLists >= before.commandLists + 1);
+    CHECK(after.commandListsProcessed >= before.commandListsProcessed + 1);
 
     CommandProcessor::Shutdown();
     GPU::Shutdown();
@@ -117,9 +118,9 @@ TEST_CASE("Phase8::Graphics::Demo::TexturedQuad::DrawIndexed", "[graphics][phase
 
     CommandList cl;
     cl.BeginRenderPass();
-    cl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-    cl.SetViewport(0, 0, 1280, 720, 0.0f, 1.0f);
-    cl.SetScissor(0, 0, 1280, 720);
+    cl.ClearColor(0, 0.0f, 0.0f, 0.0f, 1.0f);
+    cl.SetViewport({0.0f, 0.0f, 1280.0f, 720.0f, 0.0f, 1.0f});
+    cl.SetScissor({0, 0, 1280, 720});
     cl.DrawIndexed(6, 1, 0, 0, 0);   // 6 indices = 2 triangles = quad
     cl.EndRenderPass();
     cl.End();
@@ -149,11 +150,11 @@ TEST_CASE("Phase8::Graphics::Demo::OffScreen::FrameCapture", "[graphics][phase8]
     rt.height  = 720;
     rt.pitch   = 1280 * 4;
     rt.format  = PixelFormat::R8G8B8A8_Unorm;
-    GPU::SetRenderTarget(rt);
+    GPU::SetRenderTarget(0, rt);
 
     CommandList cl;
-    cl.SetRenderTarget(rt.gpuAddr, rt.format, rt.width, rt.height, rt.pitch);
-    cl.ClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+    cl.SetRenderTarget(0, rt);
+    cl.ClearColor(0, 1.0f, 0.0f, 0.0f, 1.0f);
     cl.DrawDirect(3, 1, 0, 0);
     cl.End();
 
@@ -176,14 +177,14 @@ TEST_CASE("Phase8::Graphics::Demo::MultipleFrames::FrameCountIncrements", "[grap
     for (int i = 0; i < FRAMES; ++i) {
         CommandList cl;
         cl.BeginRenderPass();
-        cl.ClearColor(0.0f, static_cast<float>(i) / FRAMES, 0.0f, 1.0f);
+        cl.ClearColor(0, 0.0f, static_cast<float>(i) / FRAMES, 0.0f, 1.0f);
         cl.DrawDirect(3, 1, 0, 0);
         cl.EndRenderPass();
         cl.End();
         CommandProcessor::Process(cl);
     }
     auto s = CommandProcessor::GetStats();
-    CHECK(s.commandLists >= FRAMES);
+    CHECK(s.commandListsProcessed >= FRAMES);
 
     CommandProcessor::Shutdown();
     GPU::Shutdown();
@@ -197,11 +198,19 @@ TEST_CASE("Phase8::Graphics::Barrier::TransitionBeforeDraw", "[graphics][phase8]
     CommandProcessor::Init(nullptr);
 
     CommandList cl;
-    cl.BarrierTransition(0, 0, 1); // resource 0: state 0→1
+    GPU::Barrier b;
+    b.gpuAddr = 0;
+    b.before = GPU::ResourceState::Undefined;
+    b.after = GPU::ResourceState::RenderTarget;
+    cl.Barrier(b);
+
     cl.BeginRenderPass();
     cl.DrawDirect(3, 1, 0, 0);
     cl.EndRenderPass();
-    cl.BarrierTransition(0, 1, 0);
+
+    b.before = GPU::ResourceState::RenderTarget;
+    b.after = GPU::ResourceState::Undefined;
+    cl.Barrier(b);
     cl.End();
 
     CommandProcessor::Process(cl);
@@ -224,18 +233,29 @@ TEST_CASE("Phase8::Graphics::ShaderCache::StoreAndRetrieve", "[graphics][phase8]
 {
     ShaderCache::Init();
     std::vector<uint8_t> bytecode = {0x01, 0x02, 0x03, 0x04};
-    auto key = ShaderCache::ComputeKey(bytecode.data(), bytecode.size());
-    ShaderCache::Store(key, bytecode);
+    ShaderKey key;
+    key.spirvHash = ShaderCache::HashSpirv(bytecode.data(), bytecode.size());
+    key.pipelineHash = 123;
+    key.stage = ShaderStage::Vertex;
+
+    ShaderCache::SetCompiler([](const std::vector<uint8_t>& spirv, ShaderStage) {
+        return spirv;
+    });
+
+    auto entry = ShaderCache::Compile(key, bytecode, "test_shader");
+    REQUIRE(entry.has_value());
+
     auto retrieved = ShaderCache::Lookup(key);
     REQUIRE(retrieved.has_value());
-    CHECK(*retrieved == bytecode);
+    CHECK(retrieved->binary == bytecode);
     ShaderCache::Shutdown();
 }
 
 TEST_CASE("Phase8::Graphics::ShaderCache::MissingKeyReturnsNullopt", "[graphics][phase8]")
 {
     ShaderCache::Init();
-    auto result = ShaderCache::Lookup(0xDEAD'BEEF'DEAD'BEEFULL);
+    ShaderKey missing_key{0xDEADBEEF, 0xDEADBEEF, ShaderStage::Fragment};
+    auto result = ShaderCache::Lookup(missing_key);
     CHECK(!result.has_value());
     ShaderCache::Shutdown();
 }
@@ -243,11 +263,16 @@ TEST_CASE("Phase8::Graphics::ShaderCache::MissingKeyReturnsNullopt", "[graphics]
 TEST_CASE("Phase8::Graphics::ShaderCache::EvictionPolicy", "[graphics][phase8]")
 {
     ShaderCache::Init();
-    // Fill with 50 entries and verify cache doesn't grow unbounded
+    ShaderCache::SetCompiler([](const std::vector<uint8_t>& spirv, ShaderStage) {
+        return spirv;
+    });
     for (int i = 0; i < 50; ++i) {
         std::vector<uint8_t> bc = {static_cast<uint8_t>(i)};
-        auto k = ShaderCache::ComputeKey(bc.data(), bc.size());
-        ShaderCache::Store(k, bc);
+        ShaderKey k;
+        k.spirvHash = ShaderCache::HashSpirv(bc.data(), bc.size());
+        k.pipelineHash = i;
+        k.stage = ShaderStage::Vertex;
+        ShaderCache::Compile(k, bc);
     }
     auto s = ShaderCache::GetStats();
     CHECK(s.entries >= 1);
@@ -263,8 +288,8 @@ TEST_CASE("Phase8::Graphics::RuntimeEvents::FrameEndPublished", "[graphics][phas
     CommandProcessor::Init(nullptr);
 
     bool frameEndSeen = false;
-    RuntimeEvents::Subscribe(RuntimeEvents::EventType::FrameEnd,
-        [&](const RuntimeEvents::Event&){ frameEndSeen = true; });
+    RuntimeEvents::Subscribe([&](const RuntimeEvents::RuntimeEvent&){ frameEndSeen = true; },
+                             RuntimeEvents::EventType::FrameEnd);
 
     CommandList cl;
     cl.End();

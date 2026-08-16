@@ -26,9 +26,12 @@ Histogram::Histogram(const std::vector<double>& bounds)
     : bounds_(bounds.empty() ? kDefaultBounds : bounds)
 {
     // One bucket per bound + overflow bucket
-    buckets_.resize(bounds_.size() + 1);
-    for (auto& b : buckets_)
-        b.store(0, std::memory_order_relaxed);
+    buckets_ = std::make_unique<std::atomic<uint64_t>[]>(bounds_.size() + 1);
+    for (size_t i = 0; i < bounds_.size() + 1; ++i)
+        buckets_[i].store(0, std::memory_order_relaxed);
+
+    min_.store(std::numeric_limits<double>::max(), std::memory_order_relaxed);
+    max_.store(std::numeric_limits<double>::lowest(), std::memory_order_relaxed);
 }
 
 void Histogram::Record(double value)
@@ -92,8 +95,8 @@ Histogram::Snapshot Histogram::GetSnapshot() const
     // For a more accurate estimation we collect bucket counts and compute from cumulative.
 
     // Collect bucket counts
-    std::vector<uint64_t> counts(buckets_.size());
-    for (size_t i = 0; i < buckets_.size(); ++i)
+    std::vector<uint64_t> counts(bounds_.size() + 1);
+    for (size_t i = 0; i < bounds_.size() + 1; ++i)
         counts[i] = buckets_[i].load(std::memory_order_relaxed);
 
     // Compute cumulative counts and estimate percentiles
@@ -128,8 +131,8 @@ Histogram::Snapshot Histogram::GetSnapshot() const
 void Histogram::Reset()
 {
     std::lock_guard lock(mtx_);
-    for (auto& b : buckets_)
-        b.store(0, std::memory_order_relaxed);
+    for (size_t i = 0; i < bounds_.size() + 1; ++i)
+        buckets_[i].store(0, std::memory_order_relaxed);
     count_.store(0, std::memory_order_relaxed);
     min_.store(std::numeric_limits<double>::max(), std::memory_order_relaxed);
     max_.store(std::numeric_limits<double>::lowest(), std::memory_order_relaxed);

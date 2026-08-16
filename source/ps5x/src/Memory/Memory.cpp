@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdlib>
+#include <cstring>
 #include <mutex>
 #include <unordered_map>
 #include <vector>
@@ -435,8 +436,48 @@ static bool HasProt(uintptr_t base, size_t size, Prot required)
     return false;
 }
 
-bool IsReadable(uintptr_t base, size_t size)   { return HasProt(base, size, Prot::Read); }
-bool IsWritable(uintptr_t base, size_t size)   { return HasProt(base, size, Prot::Write); }
+bool IsReadable(uintptr_t base, size_t size) {
+    if (HasProt(base, size, Prot::Read)) return true;
+#if !defined(_WIN32)
+    int fd[2];
+    if (pipe(fd) < 0) return false;
+    ssize_t n = write(fd[1], reinterpret_cast<const void*>(base), size);
+    close(fd[0]);
+    close(fd[1]);
+    return n == static_cast<ssize_t>(size);
+#else
+    return true; // Windows fallback
+#endif
+}
+
+bool IsWritable(uintptr_t base, size_t size) {
+    if (HasProt(base, size, Prot::Write)) return true;
+#if !defined(_WIN32)
+    if (!IsReadable(base, size)) return false;
+
+    int fd[2];
+    if (pipe(fd) < 0) return false;
+
+    std::vector<uint8_t> backup(size);
+    std::memcpy(backup.data(), reinterpret_cast<const void*>(base), size);
+
+    std::vector<uint8_t> dummy(size, 0);
+    ssize_t nw = write(fd[1], dummy.data(), size);
+    (void)nw;
+
+    ssize_t n = read(fd[0], reinterpret_cast<void*>(base), size);
+    if (n == static_cast<ssize_t>(size)) {
+        std::memcpy(reinterpret_cast<void*>(base), backup.data(), size);
+    }
+
+    close(fd[0]);
+    close(fd[1]);
+
+    return n == static_cast<ssize_t>(size);
+#else
+    return true; // Windows fallback
+#endif
+}
 bool IsExecutable(uintptr_t base, size_t size) { return HasProt(base, size, Prot::Exec); }
 
 Stats GetStats()

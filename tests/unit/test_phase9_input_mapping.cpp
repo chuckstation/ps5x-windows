@@ -19,7 +19,7 @@ TEST_CASE("InputMapping::DefaultKeyboardProfile", "[input_mapping][phase9]")
     PS5x::Logger::Init("", false, PS5x::Logger::Level::Off);
     PS5x::InputMapping::Init();
     auto profile = PS5x::InputMapping::DefaultKeyboardProfile();
-    REQUIRE(profile.name == "Default");
+    REQUIRE(profile.name == "Keyboard");
     REQUIRE_FALSE(profile.entries.empty());
     PS5x::InputMapping::Shutdown();
     PS5x::Logger::Shutdown();
@@ -51,14 +51,14 @@ TEST_CASE("InputMapping::TranslateAxis with deadzone", "[input_mapping][phase9]"
 {
     PS5x::Logger::Init("", false, PS5x::Logger::Level::Off);
     PS5x::InputMapping::Init();
-    PS5x::InputMapping::SetActiveProfile(PS5x::InputMapping::DefaultXboxProfile());
+    PS5x::InputMapping::SetActiveProfile(PS5x::InputMapping::DefaultDualSenseProfile());
     // Value below deadzone should be zeroed
     float result = PS5x::InputMapping::TranslateAxis(
-        PS5x::InputMapping::HostInputType::Gamepad, 0, 0.03f);
+        PS5x::InputMapping::HostInputType::Gamepad, static_cast<uint32_t>(PS5x::InputMapping::Ps5Button::L2), 0.03f);
     REQUIRE_THAT(result, Catch::Matchers::WithinAbs(0.0, 0.01));
     // Value above deadzone should pass through
     result = PS5x::InputMapping::TranslateAxis(
-        PS5x::InputMapping::HostInputType::Gamepad, 0, 0.8f);
+        PS5x::InputMapping::HostInputType::Gamepad, static_cast<uint32_t>(PS5x::InputMapping::Ps5Button::L2), 0.8f);
     REQUIRE(std::abs(result) > 0.0f);
     PS5x::InputMapping::Shutdown();
     PS5x::Logger::Shutdown();
@@ -71,7 +71,7 @@ TEST_CASE("InputMapping::SetActiveProfile", "[input_mapping][phase9]")
     auto kb = PS5x::InputMapping::DefaultKeyboardProfile();
     PS5x::InputMapping::SetActiveProfile(kb);
     const auto& active = PS5x::InputMapping::GetActiveProfile();
-    REQUIRE(active.name == "Default");
+    REQUIRE(active.name == "Keyboard");
     PS5x::InputMapping::Shutdown();
     PS5x::Logger::Shutdown();
 }
