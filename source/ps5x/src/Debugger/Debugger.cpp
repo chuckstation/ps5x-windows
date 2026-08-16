@@ -23,6 +23,10 @@
 #include <windows.h>
 #include <dbghelp.h>
 #pragma comment(lib, "dbghelp.lib")
+#undef ClearEventLog
+#undef CreateMutex
+#undef CreateSemaphore
+#undef CreateEvent
 #endif
 
 namespace PS5x::Debugger {

@@ -5,8 +5,12 @@
 // Windows-only: memory syscalls (mmap/brk/munmap) are implemented via
 // Win32 VirtualAlloc / VirtualFree instead of POSIX mmap.
 // All Linux ABI syscall numbers are preserved for guest compatibility.
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
+#ifndef WIN32_LEAN_AND_MEAN
+#  define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#  define NOMINMAX
+#endif
 #include "PS5x/Syscalls/Syscalls.h"
 #include "PS5x/Cpu/Cpu.h"
 #include "PS5x/Logger/Logger.h"

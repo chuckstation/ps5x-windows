@@ -4,8 +4,12 @@
 //
 // Windows-only: uses Win32 VirtualAlloc for GPU-visible host memory.
 // Null-backend mode (Init(nullptr)) is supported for headless testing.
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
+#ifndef WIN32_LEAN_AND_MEAN
+#  define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#  define NOMINMAX
+#endif
 #include "PS5x/GPU/GPU.h"
 #include "PS5x/Logger/Logger.h"
 #include "PS5x/Renderer/RendererBackend.h"

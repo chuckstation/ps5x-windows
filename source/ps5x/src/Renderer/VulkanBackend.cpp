@@ -14,8 +14,12 @@
 //
 // When the corresponding DLL / SDK is absent at runtime the backend's
 // Init() returns false and the factory falls back to the next option.
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
+#ifndef WIN32_LEAN_AND_MEAN
+#  define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#  define NOMINMAX
+#endif
 #include "PS5x/Renderer/RendererBackend.h"
 #include "PS5x/Logger/Logger.h"
 
