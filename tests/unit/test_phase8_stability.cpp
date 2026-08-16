@@ -13,6 +13,8 @@
 #include "PS5x/KernelRuntime/KernelRuntime.h"
 #include "PS5x/Logger/Logger.h"
 
+using namespace PS5x;
+
 // ── Process lifecycle stress ───────────────────────────────────────────────
 
 TEST_CASE("Phase8::Stability::Process::MultipleInitShutdown", "[stability][phase8]")
@@ -218,28 +220,28 @@ TEST_CASE("Phase8::Stability::KernelRuntime::HandleExhaustion", "[stability][pha
 TEST_CASE("Phase8::Stability::Runtime::SubsystemNameTable", "[stability][phase8]")
 {
     // All valid SubsystemIds should return a non-empty string
-    using SID = Runtime::SubsystemId;
+    using SID = PS5x::Runtime::SubsystemId;
     std::vector<SID> ids = {
-        SID::Logger, SID::Config, SID::Memory, SID::Kernel,
-        SID::Filesystem, SID::Loader, SID::KytyAdapter,
-        SID::Renderer, SID::GPU, SID::Audio, SID::Input,
-        SID::Process, SID::Debugger, SID::UI,
+        PS5x::Runtime::SubsystemId::Logger, PS5x::Runtime::SubsystemId::Config, PS5x::Runtime::SubsystemId::Memory, PS5x::Runtime::SubsystemId::Kernel,
+        PS5x::Runtime::SubsystemId::Filesystem, PS5x::Runtime::SubsystemId::Loader, PS5x::Runtime::SubsystemId::KytyAdapter,
+        PS5x::Runtime::SubsystemId::Renderer, PS5x::Runtime::SubsystemId::GPU, PS5x::Runtime::SubsystemId::Audio, PS5x::Runtime::SubsystemId::Input,
+        PS5x::Runtime::SubsystemId::Process, PS5x::Runtime::SubsystemId::Debugger, PS5x::Runtime::SubsystemId::UI,
     };
     for (auto id : ids) {
-        std::string name = Runtime::SubsystemName(id);
+        std::string name = PS5x::Runtime::SubsystemName(id);
         CHECK(!name.empty());
     }
 }
 
 TEST_CASE("Phase8::Stability::Runtime::SubsystemStateNameTable", "[stability][phase8]")
 {
-    using SS = Runtime::SubsystemState;
+    using SS = PS5x::Runtime::SubsystemState;
     std::vector<SS> states = {
-        SS::Unregistered, SS::Registered, SS::Initialising,
-        SS::Running, SS::ShuttingDown, SS::Stopped, SS::Failed,
+        PS5x::Runtime::SubsystemState::Unregistered, PS5x::Runtime::SubsystemState::Registered, PS5x::Runtime::SubsystemState::Initialising,
+        PS5x::Runtime::SubsystemState::Running, PS5x::Runtime::SubsystemState::ShuttingDown, PS5x::Runtime::SubsystemState::Stopped, PS5x::Runtime::SubsystemState::Failed,
     };
     for (auto s : states) {
-        std::string name = Runtime::SubsystemStateName(s);
+        std::string name = PS5x::Runtime::SubsystemStateName(s);
         CHECK(!name.empty());
     }
 }

@@ -50,7 +50,11 @@ struct ModuleDesc
     bool                         isMain     = false;
     bool                         loaded     = false;
     uint64_t                     loadTimeUs = 0;
+    uint64_t                     baseAddr   = 0;
+    uint64_t                     size       = 0;
 };
+
+using Module = ModuleDesc;
 
 // ── Relocation record ─────────────────────────────────────────────────────
 struct Relocation
@@ -74,6 +78,8 @@ ModuleId Register(const std::string& name,
                   const std::filesystem::path& path,
                   Loader::ExecutableInfo elfInfo,
                   bool isMain = false);
+
+ModuleId Register(const ModuleDesc& desc);
 
 /// Dynamically load and register a module by path.
 /// Handles symbol resolution and relocation against already-loaded modules.
@@ -100,6 +106,7 @@ bool ApplyRelocations(ModuleId id);
 std::optional<ModuleDesc>     GetModule(ModuleId id);
 std::optional<ModuleDesc>     GetModuleByName(const std::string& name);
 std::vector<ModuleDesc>       GetAllModules();
+std::vector<ModuleDesc>       GetAll(); // Compatibility alias for GetAllModules
 std::vector<ModuleId>         GetLoadOrder();      ///< topological load order
 ModuleId                      GetMainModule();
 uint32_t                      GetModuleCount();

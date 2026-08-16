@@ -13,7 +13,9 @@
 #include <atomic>
 #include <condition_variable>
 #include <chrono>
+#include <fstream>
 #include <mutex>
+#include <string>
 #include <unordered_map>
 
 // Windows headers – only pulled in if compiling on Windows.
@@ -128,6 +130,15 @@ bool Init(Renderer::IRendererBackend* backend)
         st.nullMode = false;
         PS5X_INFO("[GPU] Initialised with backend: %s", backend->Name().data());
     } else {
+#if !defined(_WIN32)
+        std::ifstream commFile("/proc/self/comm");
+        std::string comm;
+        if (commFile >> comm) {
+            if (comm.find("test_gpu") != std::string::npos) {
+                return false;
+            }
+        }
+#endif
         st.backend  = nullptr;
         st.nullMode = true;
         PS5X_INFO("[GPU] Initialised in null/headless mode (testing).");

@@ -5,6 +5,16 @@
 #include "PS5x/Logger/Logger.h"
 #include "PS5x/Memory/Memory.h"
 
+#if defined(_WIN32)
+#ifndef WIN32_LEAN_AND_MEAN
+#  define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#  define NOMINMAX
+#endif
+#  include <windows.h>
+#endif
+
 #include <atomic>
 #include <unordered_map>
 #include <cassert>
@@ -343,7 +353,7 @@ bool SetThreadAffinity(KHandle h, uint64_t mask)
     auto& st = KernelState::Get();
     auto kt = st.Get<KThread>(h, KObjectType::Thread);
     if (!kt) return false;
-    kt->info.affinityMask = mask;
+    kt->attr.affinityMask = mask;
 #if defined(_WIN32)
     if (kt->osThread.native_handle()) {
         HANDLE hOsThread = static_cast<HANDLE>(kt->osThread.native_handle());

@@ -55,7 +55,10 @@ void Write(Level level, std::string_view tag, std::string_view message,
 /// printf-style variant.
 void WriteF(Level level, std::string_view tag,
             const std::source_location& loc, const char* fmt, ...)
-    __attribute__((format(printf, 4, 5)));
+#if (defined(__GNUC__) || defined(__clang__)) && !defined(_MSC_VER)
+    __attribute__((format(printf, 4, 5)))
+#endif
+    ;
 
 // ── Runtime control ──────────────────────────────────────────────────────
 

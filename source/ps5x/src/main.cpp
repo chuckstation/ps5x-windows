@@ -162,7 +162,7 @@ int main(int argc, char* argv[])
 #endif
 
     // ── 16. UI ────────────────────────────────────────────────────────────
-    PS5x::UI::Init(cfg.graphics.width, cfg.graphics.height, "PS5x v1.0.0");
+    PS5x::UI::Init();
 
     // Bridge Logger → UI console pane
     PS5x::Logger::AddSink([](PS5x::Logger::Level lvl, std::string_view tag, std::string_view msg) {

@@ -174,8 +174,8 @@ jobs:
 
       - name: Check CMake formatting
         run: |
-          pip install cmakelang
-          cmakelint CMakeLists.txt source/ps5x/CMakeLists.txt tests/CMakeLists.txt
+          python -m pip install cmakelang
+          python -m cmakelang.lint CMakeLists.txt source/ps5x/CMakeLists.txt tests/CMakeLists.txt
 
   # ── Release artifacts ─────────────────────────────────────────────────
   release:

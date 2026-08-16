@@ -4,12 +4,12 @@
 include_guard(GLOBAL)
 
 # ── Detect compiler ───────────────────────────────────────────────────────────
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+if(MSVC)
+    set(PS5X_COMPILER_MSVC TRUE)
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(PS5X_COMPILER_CLANG TRUE)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set(PS5X_COMPILER_GCC TRUE)
-elseif(MSVC)
-    set(PS5X_COMPILER_MSVC TRUE)
 endif()
 
 # ── Function to apply standard flags to a target ─────────────────────────────

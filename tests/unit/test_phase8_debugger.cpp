@@ -410,14 +410,14 @@ TEST_CASE("Phase8::Debugger::EventBrowser::CapturesRuntimeEvent", "[debugger][ph
     Debugger::AttachEventBrowser();
 
     RuntimeEvents::Publish(RuntimeEvents::EventType::FrameEnd, {});
-    RuntimeEvents::Publish(RuntimeEvents::EventType::ProcessStart, {});
+    RuntimeEvents::Publish(RuntimeEvents::EventType::ProcessStarted, {});
 
     auto log = Debugger::GetEventLog();
     CHECK(log.size() >= 2);
     bool foundFrame = false, foundProc = false;
     for (auto& e : log) {
         if (e.type == RuntimeEvents::EventType::FrameEnd)    foundFrame = true;
-        if (e.type == RuntimeEvents::EventType::ProcessStart) foundProc = true;
+        if (e.type == RuntimeEvents::EventType::ProcessStarted) foundProc = true;
     }
     CHECK(foundFrame);
     CHECK(foundProc);
@@ -433,7 +433,7 @@ TEST_CASE("Phase8::Debugger::EventBrowser::FilterByType", "[debugger][phase8]")
     Debugger::AttachEventBrowser();
 
     RuntimeEvents::Publish(RuntimeEvents::EventType::FrameEnd, {});
-    RuntimeEvents::Publish(RuntimeEvents::EventType::ProcessStart, {});
+    RuntimeEvents::Publish(RuntimeEvents::EventType::ProcessStarted, {});
     RuntimeEvents::Publish(RuntimeEvents::EventType::FrameEnd, {});
 
     auto log = Debugger::GetEventLog(RuntimeEvents::EventType::FrameEnd);

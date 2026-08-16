@@ -4,6 +4,7 @@
 #pragma once
 #include <atomic>
 #include <cstdint>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <unordered_map>
@@ -44,7 +45,7 @@ public:
     void Reset();
 private:
     std::vector<double> bounds_;
-    std::vector<std::atomic<uint64_t>> buckets_;
+    std::unique_ptr<std::atomic<uint64_t>[]> buckets_;
     std::atomic<uint64_t> count_{0};
     std::atomic<double> min_{0}, max_{0}, sum_{0};
     mutable std::mutex mtx_;

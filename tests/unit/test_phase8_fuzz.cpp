@@ -16,6 +16,7 @@
 #include <vector>
 
 using namespace PS5x;
+using namespace PS5x::CommandProcessor;
 
 // ── Helper: deterministic random bytes ────────────────────────────────────
 
@@ -191,10 +192,10 @@ TEST_CASE("Phase8::Fuzz::CommandProcessor::MixedCommands", "[fuzz][phase8]")
         for (int i = 0; i < ops; ++i) {
             switch (rng() % 5) {
                 case 0: cl.BeginRenderPass(); break;
-                case 1: cl.ClearColor(0,0,0,1); break;
+                case 1: cl.ClearColor(0, 0.f, 0.f, 0.f, 1.f); break;
                 case 2: cl.DrawDirect(3,1,0,0); break;
                 case 3: cl.EndRenderPass(); break;
-                case 4: cl.BarrierTransition(0,0,1); break;
+                case 4: cl.Barrier({0, GPU::ResourceState::Undefined, GPU::ResourceState::RenderTarget}); break;
             }
         }
         cl.End();

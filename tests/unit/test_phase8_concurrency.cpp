@@ -47,8 +47,8 @@ TEST_CASE("Phase8::Concurrency::RuntimeEvents::ConcurrentPublish", "[concurrency
     RuntimeEvents::Init();
     std::atomic<int> received{0};
 
-    RuntimeEvents::Subscribe(RuntimeEvents::EventType::FrameEnd,
-        [&](const RuntimeEvents::Event&) { ++received; });
+    RuntimeEvents::Subscribe([&](const RuntimeEvents::RuntimeEvent&) { ++received; },
+                             RuntimeEvents::EventType::FrameEnd);
 
     constexpr int THREADS = 4;
     constexpr int PER_THREAD = 50;
@@ -83,8 +83,8 @@ TEST_CASE("Phase8::Concurrency::RuntimeEvents::ConcurrentSubscribePublish", "[co
     auto subscriber = [&]() {
         for (int i = 0; i < 10; ++i) {
             try {
-                RuntimeEvents::Subscribe(RuntimeEvents::EventType::ProcessStart,
-                    [](const RuntimeEvents::Event&){});
+                RuntimeEvents::Subscribe([](const RuntimeEvents::RuntimeEvent&){},
+                                         RuntimeEvents::EventType::ProcessStarted);
             } catch (...) { crashed = true; }
         }
     };

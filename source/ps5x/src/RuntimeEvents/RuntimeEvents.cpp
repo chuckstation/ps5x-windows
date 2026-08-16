@@ -5,6 +5,7 @@
 #include "PS5x/Logger/Logger.h"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <deque>

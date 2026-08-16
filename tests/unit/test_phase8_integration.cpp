@@ -17,6 +17,7 @@
 #include "PS5x/Process/Process.h"
 
 using namespace PS5x;
+using namespace PS5x::CommandProcessor;
 
 // ── Full subsystem init/shutdown ──────────────────────────────────────────
 
@@ -31,8 +32,10 @@ TEST_CASE("Phase8::Integration::FullInit::AllSubsystems", "[integration][phase8]
     CHECK(Debugger::Init());
     CHECK(PerfTools::Init());
     CHECK(RuntimeEvents::Init());
-    CHECK(Audio::Init());
-    CHECK(Input::Init());
+    Audio::AudioConfig acfg{};
+    CHECK(Audio::Init(acfg));
+    Input::Init();
+    CHECK(true);
 
     // All initialised without crash
     CHECK(true);
@@ -332,7 +335,7 @@ TEST_CASE("Phase8::Integration::Homebrew::WriteAndExit", "[integration][phase8]"
         if (r == Cpu::StepResult::Syscall) {
             Syscalls::Dispatch(Cpu::GetContext());
         }
-        if (r == Cpu::StepResult::Halt || !Cpu::IsRunning()) break;
+        if (r == Cpu::StepResult::Halt || exited) break;
     }
 
     CHECK(exited);

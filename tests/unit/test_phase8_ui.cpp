@@ -9,6 +9,7 @@
 #include "PS5x/Config/Config.h"
 #include "PS5x/Logger/Logger.h"
 #include "PS5x/PerfTools/PerfTools.h"
+#include "PS5x/Cpu/Cpu.h"
 
 using namespace PS5x;
 
@@ -55,7 +56,7 @@ TEST_CASE("Phase8::UI::WelcomeScreen::CanDisable", "[ui][phase8]")
 
 TEST_CASE("Phase8::UI::WelcomeScreen::PersistsThroughConfig", "[ui][phase8]")
 {
-    Config::Init();
+    Config::Reset();
     UI::Init(nullptr);
     UI::SetWelcomeScreenEnabled(false);
     UI::SaveLayout();
@@ -66,7 +67,7 @@ TEST_CASE("Phase8::UI::WelcomeScreen::PersistsThroughConfig", "[ui][phase8]")
     CHECK(!UI::IsWelcomeScreenEnabled());
 
     UI::Shutdown();
-    Config::Shutdown();
+    Config::Reset();
 }
 
 // ── Recent homebrew list ──────────────────────────────────────────────────
@@ -194,7 +195,7 @@ TEST_CASE("Phase8::UI::Theme::CustomAccentColor", "[ui][phase8]")
 
 TEST_CASE("Phase8::UI::Theme::PersistsThroughSaveLoad", "[ui][phase8]")
 {
-    Config::Init();
+    Config::Reset();
     UI::Init(nullptr);
     UI::SetTheme("Dark");
     UI::SetAccentColor(0x10, 0x20, 0x30);
@@ -209,14 +210,14 @@ TEST_CASE("Phase8::UI::Theme::PersistsThroughSaveLoad", "[ui][phase8]")
     CHECK(c.g == 0x20);
     CHECK(c.b == 0x30);
     UI::Shutdown();
-    Config::Shutdown();
+    Config::Reset();
 }
 
 // ── Dock layout persistence ───────────────────────────────────────────────
 
 TEST_CASE("Phase8::UI::DockLayout::SaveAndLoad", "[ui][phase8]")
 {
-    Config::Init();
+    Config::Reset();
     UI::Init(nullptr);
 
     UI::DockPanel panel{};
@@ -239,7 +240,7 @@ TEST_CASE("Phase8::UI::DockLayout::SaveAndLoad", "[ui][phase8]")
     CHECK(p->visible == true);
 
     UI::Shutdown();
-    Config::Shutdown();
+    Config::Reset();
 }
 
 TEST_CASE("Phase8::UI::DockLayout::MultiplePanels", "[ui][phase8]")

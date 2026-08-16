@@ -198,10 +198,10 @@ bool ApplyReloc(const RelocEntry& reloc)
         // R_X86_64_RELATIVE: patch64(B + A)
         // Resolve B (module base) from ModuleRegistry by the owning module id.
         uint64_t B = 0;
-        if (reloc.moduleId != 0) {
+        if (reloc.symModuleId != 0) {
             auto mods = ModuleRegistry::GetAll();
             for (auto& m : mods) {
-                if (m.id == reloc.moduleId) { B = m.baseAddr; break; }
+                if (m.id == reloc.symModuleId) { B = m.baseAddr; break; }
             }
         }
         uint64_t val = B + static_cast<uint64_t>(reloc.addend);

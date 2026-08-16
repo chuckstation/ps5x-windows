@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
 #include "PS5x/GPU/GPU.h"
+#include <array>
 #include <thread>
 #include <chrono>
 

@@ -339,7 +339,7 @@ std::vector<DirEntry> ReadDir(std::string_view guestPath)
         // modTime
         auto wt = de.last_write_time(ec);
         if (!ec) {
-            auto sctp = std::chrono::file_clock::to_sys(wt);
+            auto sctp = std::chrono::clock_cast<std::chrono::system_clock>(wt);
             e.modTime = static_cast<uint64_t>(
                 std::chrono::duration_cast<std::chrono::seconds>(
                     sctp.time_since_epoch()).count());
@@ -394,7 +394,7 @@ FileStat Stat(std::string_view guestPath)
     s.size   = s.isDir ? 0 : std::filesystem::file_size(*h, ec);
     auto wt  = std::filesystem::last_write_time(*h, ec);
     if (!ec) {
-        auto sctp = std::chrono::file_clock::to_sys(wt);
+        auto sctp = std::chrono::clock_cast<std::chrono::system_clock>(wt);
         s.modTime = static_cast<uint64_t>(
             std::chrono::duration_cast<std::chrono::seconds>(
                 sctp.time_since_epoch()).count());

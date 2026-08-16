@@ -4,6 +4,7 @@
 #include "PS5x/Loader/Loader.h"
 #include "PS5x/Logger/Logger.h"
 #include "PS5x/Memory/Memory.h"
+#include "PS5x/Cpu/Cpu.h"
 
 #include <algorithm>
 #include <cassert>
@@ -44,8 +45,29 @@ namespace Elf64 {
         uint32_t p_type, p_flags;
         uint64_t p_offset, p_vaddr, p_paddr, p_filesz, p_memsz, p_align;
     };
+    struct Shdr {
+        uint32_t sh_name;
+        uint32_t sh_type;
+        uint64_t sh_flags;
+        uint64_t sh_addr;
+        uint64_t sh_offset;
+        uint64_t sh_size;
+        uint32_t sh_link;
+        uint32_t sh_info;
+        uint64_t sh_addralign;
+        uint64_t sh_entsize;
+    };
+    struct Sym {
+        uint32_t st_name;
+        uint8_t  st_info;
+        uint8_t  st_other;
+        uint16_t st_shndx;
+        uint64_t st_value;
+        uint64_t st_size;
+    };
 #pragma pack(pop)
     static_assert(sizeof(Ehdr)==64,""); static_assert(sizeof(Phdr)==56,"");
+    static_assert(sizeof(Shdr)==64,""); static_assert(sizeof(Sym)==24,"");
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────
@@ -160,10 +182,73 @@ LoadResult InspectElf(const std::filesystem::path& path, ExecutableInfo& out) {
     if (vaMin != UINT64_MAX) out.imageBase = vaMin;
     out.imageSize = (vaMax > vaMin) ? vaMax - vaMin : 0;
 
-    PS5X_INFO("[Loader] Inspect OK: %s  entry=0x%llx segs=%zu PIC=%d",
+    // Parse section headers, symbols, and relocations
+    std::vector<Elf64::Shdr> shdrs;
+    if (eh.e_shnum > 0 && eh.e_shoff > 0) {
+        shdrs.resize(eh.e_shnum);
+        for (uint16_t i = 0; i < eh.e_shnum; ++i) {
+            if (!ReadAt(f, eh.e_shoff + i * sizeof(Elf64::Shdr), shdrs[i])) {
+                shdrs.clear();
+                break;
+            }
+        }
+    }
+
+    std::vector<char> shstrtab;
+    if (!shdrs.empty() && eh.e_shstrndx < shdrs.size()) {
+        const auto& sh = shdrs[eh.e_shstrndx];
+        shstrtab.resize(static_cast<size_t>(sh.sh_size));
+        ReadBytes(f, sh.sh_offset, shstrtab.data(), shstrtab.size());
+    }
+
+    out.symbols.clear();
+    out.relaSections.clear();
+
+    for (const auto& sh : shdrs) {
+        if (sh.sh_type == 2 || sh.sh_type == 11) { // SHT_SYMTAB (2) or SHT_DYNSYM (11)
+            std::vector<char> strtab;
+            if (sh.sh_link < shdrs.size()) {
+                const auto& strsh = shdrs[sh.sh_link];
+                strtab.resize(static_cast<size_t>(strsh.sh_size));
+                ReadBytes(f, strsh.sh_offset, strtab.data(), strtab.size());
+            }
+
+            size_t symCount = sh.sh_size / sizeof(Elf64::Sym);
+            for (size_t i = 0; i < symCount; ++i) {
+                Elf64::Sym elfsym{};
+                if (ReadAt(f, sh.sh_offset + i * sizeof(Elf64::Sym), elfsym)) {
+                    Symbol sym;
+                    if (elfsym.st_name < strtab.size()) {
+                        sym.name = &strtab[elfsym.st_name];
+                    }
+                    sym.value = elfsym.st_value;
+                    sym.size = elfsym.st_size;
+                    sym.binding = elfsym.st_info >> 4;
+                    sym.type = elfsym.st_info & 0xF;
+                    sym.visibility = elfsym.st_other & 0x3;
+                    sym.shndx = elfsym.st_shndx;
+                    out.symbols.push_back(sym);
+                }
+            }
+        } else if (sh.sh_type == 4) { // SHT_RELA (4)
+            RelaSection rs;
+            if (sh.sh_name < shstrtab.size()) {
+                rs.name = &shstrtab[sh.sh_name];
+            } else {
+                rs.name = "rela";
+            }
+            rs.size = sh.sh_size;
+            rs.data.resize(static_cast<size_t>(sh.sh_size));
+            ReadBytes(f, sh.sh_offset, rs.data.data(), rs.data.size());
+            out.relaSections.push_back(std::move(rs));
+        }
+    }
+
+    PS5X_INFO("[Loader] Inspect OK: %s  entry=0x%llx segs=%zu PIC=%d symbols=%zu relas=%zu",
               path.filename().string().c_str(),
               static_cast<unsigned long long>(out.entryPoint),
-              out.segments.size(), out.isPic?1:0);
+              out.segments.size(), out.isPic?1:0,
+              out.symbols.size(), out.relaSections.size());
     return LoadResult::Ok;
 }
 
@@ -222,6 +307,14 @@ LoadResult MapSegments(ExecutableInfo& info, const std::filesystem::path& path) 
 
     if (info.isPic) info.entryPoint += loadBias;
     info.imageBase = loadBias;
+
+    // Adjust relocation offsets relative to imageBase
+    for (auto& rs : info.relaSections) {
+        if (!rs.data.empty()) {
+            rs.offset = reinterpret_cast<uintptr_t>(rs.data.data()) - info.imageBase;
+        }
+    }
+
     info.loaded    = true;
     return LoadResult::Ok;
 }
@@ -238,6 +331,115 @@ LoadResult LoadExecutable(const std::filesystem::path& path, ExecutableInfo& out
               static_cast<unsigned long long>(out.entryPoint),
               static_cast<unsigned long long>(out.imageBase));
     return LoadResult::Ok;
+}
+
+LoadResult LoadFromMemory(const uint8_t* data, size_t size) {
+    if (!data || size < sizeof(Elf64::Ehdr)) {
+        return LoadResult::InvalidElf;
+    }
+
+    const auto* eh = reinterpret_cast<const Elf64::Ehdr*>(data);
+    if (*reinterpret_cast<const uint32_t*>(eh->e_ident) != Elf64::MAGIC_LE)
+        return LoadResult::InvalidElf;
+    if (eh->e_ident[4] != Elf64::ELFCLASS64) return LoadResult::InvalidElf;
+    if (eh->e_ident[5] != Elf64::ELFLSB)     return LoadResult::InvalidElf;
+    if (eh->e_machine   != Elf64::EM_X86_64)  return LoadResult::UnsupportedArch;
+
+    bool isSce = (eh->e_type==Elf64::ET_SCE_EXEC ||
+                  eh->e_type==Elf64::ET_SCE_DYNEXEC ||
+                  eh->e_type==Elf64::ET_SCE_DYNAMIC);
+    bool isStd = (eh->e_type==Elf64::ET_EXEC || eh->e_type==Elf64::ET_DYN);
+    if (!isSce && !isStd) return LoadResult::InvalidElf;
+
+    ExecutableInfo info;
+    info.entryPoint = eh->e_entry;
+    info.isPic      = (eh->e_type==Elf64::ET_DYN ||
+                       eh->e_type==Elf64::ET_SCE_DYNEXEC ||
+                       eh->e_type==Elf64::ET_SCE_DYNAMIC);
+
+    if (eh->e_phoff == 0 || eh->e_phnum == 0 ||
+        eh->e_phoff + static_cast<uint64_t>(eh->e_phnum) * sizeof(Elf64::Phdr) > size) {
+        return LoadResult::InvalidProgramHeader;
+    }
+
+    uint64_t vaMin = UINT64_MAX, vaMax = 0;
+    const auto* phdrs = reinterpret_cast<const Elf64::Phdr*>(data + eh->e_phoff);
+
+    for (uint16_t i = 0; i < eh->e_phnum; ++i) {
+        const auto& ph = phdrs[i];
+        if (ph.p_type != Elf64::PT_LOAD) continue;
+
+        if (ph.p_offset + ph.p_filesz > size) {
+            return LoadResult::InvalidProgramHeader;
+        }
+
+        Segment seg;
+        seg.vaddr = ph.p_vaddr; seg.paddr = ph.p_offset;
+        seg.filesz = ph.p_filesz; seg.memsz = ph.p_memsz;
+        seg.flags = ph.p_flags; seg.type = ph.p_type;
+        seg.align = ph.p_align ? ph.p_align : Memory::PAGE_SIZE;
+        info.segments.push_back(seg);
+
+        if (ph.p_vaddr < vaMin) vaMin = ph.p_vaddr;
+        uint64_t end = ph.p_vaddr + ph.p_memsz;
+        if (end > vaMax) vaMax = end;
+    }
+
+    if (info.segments.empty()) return LoadResult::InvalidProgramHeader;
+
+    if (vaMin != UINT64_MAX) info.imageBase = vaMin;
+    info.imageSize = (vaMax > vaMin) ? vaMax - vaMin : 0;
+
+    uint64_t loadBias = 0;
+    for (auto& seg : info.segments) {
+        if (seg.memsz == 0) continue;
+
+        size_t align  = static_cast<size_t>(seg.align ? seg.align : Memory::PAGE_SIZE);
+        uint64_t aVa  = seg.vaddr & ~static_cast<uint64_t>(align - 1);
+        uint64_t aEnd = (seg.vaddr + seg.memsz + align - 1) & ~static_cast<uint64_t>(align - 1);
+        size_t mapSz  = static_cast<size_t>(aEnd - aVa);
+
+        uintptr_t base = Memory::Map(
+            static_cast<uintptr_t>(loadBias + aVa), mapSz,
+            Memory::Prot::RW,
+            (seg.flags & Elf64::PF_X) ? Memory::AllocType::Code : Memory::AllocType::Data,
+            "MemoryElf");
+
+        if (!base) return LoadResult::MemoryError;
+        seg.hostBase = base;
+
+        if (info.isPic && loadBias == 0)
+            loadBias = base - aVa;
+
+        if (seg.filesz > 0) {
+            uintptr_t dest = base + static_cast<size_t>(seg.vaddr - aVa);
+            std::memcpy(reinterpret_cast<void*>(dest), data + seg.paddr, static_cast<size_t>(seg.filesz));
+        }
+
+        if (seg.memsz > seg.filesz) {
+            uintptr_t bss = base + static_cast<size_t>(seg.vaddr - aVa + seg.filesz);
+            std::memset(reinterpret_cast<void*>(bss), 0, static_cast<size_t>(seg.memsz - seg.filesz));
+        }
+
+        Memory::Protect(base, mapSz, FlagsToProt(seg.flags));
+    }
+
+    if (info.isPic) info.entryPoint += loadBias;
+    info.imageBase = loadBias;
+    info.loaded = true;
+
+    auto& st = State::Get();
+    std::lock_guard lk(st.mtx);
+    st.current = std::move(info);
+
+    return LoadResult::Ok;
+}
+
+LoadResult LoadFromPath(const std::string& path) {
+    if (path.empty()) return LoadResult::FileNotFound;
+    if (!std::filesystem::exists(path)) return LoadResult::FileNotFound;
+    ExecutableInfo info;
+    return LoadExecutable(path, info);
 }
 
 LoadResult UnloadExecutable(ExecutableInfo& info) {

@@ -16,6 +16,7 @@
 #include <cstring>
 
 using namespace PS5x;
+using namespace PS5x::CommandProcessor;
 using Clock = std::chrono::steady_clock;
 using Ms    = std::chrono::duration<double, std::milli>;
 
@@ -218,7 +219,7 @@ TEST_CASE("Phase8::Perf::CommandProcessor::100CommandLists", "[perf][phase8]")
     for (int i = 0; i < 100; ++i) {
         CommandList cl;
         cl.BeginRenderPass();
-        cl.ClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        cl.ClearColor(0, 0.0f, 0.0f, 0.0f, 1.0f);
         cl.DrawDirect(3, 1, 0, 0);
         cl.EndRenderPass();
         cl.End();
@@ -228,7 +229,7 @@ TEST_CASE("Phase8::Perf::CommandProcessor::100CommandLists", "[perf][phase8]")
     double ms = Ms(t1 - t0).count();
 
     auto s = CommandProcessor::GetStats();
-    CHECK(s.commandLists >= 100);
+    CHECK(s.commandListsProcessed >= 100);
     CHECK(ms < 2000.0);
 
     CommandProcessor::Shutdown();

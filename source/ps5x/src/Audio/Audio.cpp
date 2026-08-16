@@ -10,6 +10,7 @@
 #include "PS5x/Logger/Logger.h"
 
 #include <algorithm>
+#include <array>
 #include <memory>
 #include <atomic>
 #include <cmath>
