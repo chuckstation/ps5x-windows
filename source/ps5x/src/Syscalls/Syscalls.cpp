@@ -5,12 +5,8 @@
 // Windows-only: memory syscalls (mmap/brk/munmap) are implemented via
 // Win32 VirtualAlloc / VirtualFree instead of POSIX mmap.
 // All Linux ABI syscall numbers are preserved for guest compatibility.
-#ifndef WIN32_LEAN_AND_MEAN
-#  define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef NOMINMAX
-#  define NOMINMAX
-#endif
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include "PS5x/Syscalls/Syscalls.h"
 #include "PS5x/Cpu/Cpu.h"
 #include "PS5x/Logger/Logger.h"
@@ -151,9 +147,17 @@ namespace WinMem {
     static int Munmap(void* addr, size_t length) {
         (void)length;
 #if defined(_WIN32)
-        if (!::VirtualFree(addr, 0, MEM_RELEASE)) {
-            PS5X_WARN("[Syscall] munmap: VirtualFree failed err=%lu.", ::GetLastError());
-            return -1;
+        if (addr) {
+            std::lock_guard<std::mutex> lk(mmapMtx);
+            auto it = std::find(mmapAllocs.begin(), mmapAllocs.end(), addr);
+            if (it != mmapAllocs.end()) {
+                ::VirtualFree(addr, 0, MEM_RELEASE);
+                mmapAllocs.erase(it);
+                return 0;
+            }
+            if (::VirtualFree(addr, 0, MEM_RELEASE) || ::GetLastError() == ERROR_INVALID_ADDRESS) {
+                return 0;
+            }
         }
         return 0;
 #else

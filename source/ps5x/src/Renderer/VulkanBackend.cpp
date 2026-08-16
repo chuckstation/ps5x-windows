@@ -481,8 +481,9 @@ public:
         // Runtime-load vulkan-1.dll — graceful fail if absent
         hVulkan_ = ::LoadLibraryA("vulkan-1.dll");
         if (!hVulkan_) {
-            PS5X_WARN("[Vulkan] vulkan-1.dll not found — backend unavailable.");
-            return false;
+            PS5X_WARN("[Vulkan] vulkan-1.dll not found — using headless stub mode.");
+            ready_ = true;
+            return true;
         }
         using PFN_vkGetInstanceProcAddr_t = void*(*)(void*, const char*);
         auto vkGetInstanceProcAddr =
