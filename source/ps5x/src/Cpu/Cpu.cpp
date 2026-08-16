@@ -111,6 +111,52 @@ static bool GuestWrite(uint64_t addr, T val) {
 
 // ── Flag update helpers ────────────────────────────────────────────────────
 
+static bool Parity(uint64_t result)
+{
+    uint8_t v = static_cast<uint8_t>(result & 0xFF);
+    v ^= v >> 4;
+    v ^= v >> 2;
+    v ^= v >> 1;
+    return (v & 1) == 0;
+}
+
+static void Mul128U(uint64_t a, uint64_t b, uint64_t& hi, uint64_t& lo) {
+#if defined(__SIZEOF_INT128__)
+    unsigned __int128 r = static_cast<unsigned __int128>(a) * b;
+    lo = static_cast<uint64_t>(r);
+    hi = static_cast<uint64_t>(r >> 64);
+#elif defined(_MSC_VER) && !defined(__clang__)
+    lo = _umul128(a, b, &hi);
+#else
+    uint64_t a_lo = static_cast<uint32_t>(a), a_hi = a >> 32;
+    uint64_t b_lo = static_cast<uint32_t>(b), b_hi = b >> 32;
+    uint64_t p0 = a_lo * b_lo;
+    uint64_t p1 = a_lo * b_hi;
+    uint64_t p2 = a_hi * b_lo;
+    uint64_t p3 = a_hi * b_hi;
+    uint64_t cy = (p0 >> 32) + static_cast<uint32_t>(p1) + static_cast<uint32_t>(p2);
+    lo = (p0 & 0xFFFFFFFFULL) | ((cy & 0xFFFFFFFFULL) << 32);
+    hi = p3 + (p1 >> 32) + (p2 >> 32) + (cy >> 32);
+#endif
+}
+
+static void Mul128S(int64_t a, int64_t b, int64_t& hi, uint64_t& lo) {
+#if defined(__SIZEOF_INT128__)
+    __int128 r = static_cast<__int128>(a) * b;
+    lo = static_cast<uint64_t>(r);
+    hi = static_cast<int64_t>(r >> 64);
+#elif defined(_MSC_VER) && !defined(__clang__)
+    lo = static_cast<uint64_t>(_mul128(a, b, &hi));
+#else
+    uint64_t u_hi = 0, u_lo = 0;
+    Mul128U(static_cast<uint64_t>(a), static_cast<uint64_t>(b), u_hi, u_lo);
+    if (a < 0) u_hi -= static_cast<uint64_t>(b);
+    if (b < 0) u_hi -= static_cast<uint64_t>(a);
+    lo = u_lo;
+    hi = static_cast<int64_t>(u_hi);
+#endif
+}
+
 static void UpdateFlagsLogic(CpuContext& ctx, uint64_t result, int bits)
 {
     uint64_t mask = (bits == 64) ? UINT64_MAX :
@@ -121,7 +167,7 @@ static void UpdateFlagsLogic(CpuContext& ctx, uint64_t result, int bits)
     ctx.set_flag(Flags::OF, false);
     ctx.set_flag(Flags::ZF, result == 0);
     ctx.set_flag(Flags::SF, (result >> (bits - 1)) & 1);
-    ctx.set_flag(Flags::PF, __builtin_parityll(result & 0xFF) == 0);
+    ctx.set_flag(Flags::PF, Parity(result));
 }
 
 static void UpdateFlagsArith(CpuContext& ctx, uint64_t a, uint64_t b,
@@ -135,7 +181,7 @@ static void UpdateFlagsArith(CpuContext& ctx, uint64_t a, uint64_t b,
 
     ctx.set_flag(Flags::ZF, r == 0);
     ctx.set_flag(Flags::SF, (r >> (bits - 1)) & 1);
-    ctx.set_flag(Flags::PF, __builtin_parityll(r & 0xFF) == 0);
+    ctx.set_flag(Flags::PF, Parity(r));
 
     if (isSub) {
         ctx.set_flag(Flags::CF, (a & mask) < (b & mask));
@@ -724,9 +770,11 @@ static StepResult ExecuteOne(CpuState& st)
             if ((modrm >> 6) == 3) {
                 int64_t a = static_cast<int64_t>(ctx.gpr[reg]);
                 int64_t b = static_cast<int64_t>(ctx.gpr[rm]);
-                __int128 r = static_cast<__int128>(a) * b;
-                ctx.gpr[reg] = static_cast<uint64_t>(r);
-                bool overflow = (r != static_cast<int64_t>(r));
+                int64_t hi = 0;
+                uint64_t lo = 0;
+                Mul128S(a, b, hi, lo);
+                ctx.gpr[reg] = lo;
+                bool overflow = (hi != (static_cast<int64_t>(lo) >> 63));
                 ctx.set_flag(Flags::CF, overflow);
                 ctx.set_flag(Flags::OF, overflow);
             }
@@ -889,19 +937,21 @@ static StepResult ExecuteOne(CpuState& st)
                 v = r;
             } else if (ext == 4) {
                 // MUL RAX × rm → RDX:RAX
-                unsigned __int128 r = static_cast<unsigned __int128>(ctx.gpr[static_cast<size_t>(Reg::RAX)]) * v;
-                ctx.gpr[static_cast<size_t>(Reg::RAX)] = static_cast<uint64_t>(r);
-                ctx.gpr[static_cast<size_t>(Reg::RDX)] = static_cast<uint64_t>(r >> 64);
-                bool high = ctx.gpr[static_cast<size_t>(Reg::RDX)] != 0;
+                uint64_t hi = 0, lo = 0;
+                Mul128U(ctx.gpr[static_cast<size_t>(Reg::RAX)], v, hi, lo);
+                ctx.gpr[static_cast<size_t>(Reg::RAX)] = lo;
+                ctx.gpr[static_cast<size_t>(Reg::RDX)] = hi;
+                bool high = hi != 0;
                 ctx.set_flag(Flags::CF, high);
                 ctx.set_flag(Flags::OF, high);
             } else if (ext == 5) {
                 // IMUL RAX × rm → RDX:RAX
-                __int128 r = static_cast<__int128>(static_cast<int64_t>(ctx.gpr[static_cast<size_t>(Reg::RAX)])) *
-                             static_cast<int64_t>(v);
-                ctx.gpr[static_cast<size_t>(Reg::RAX)] = static_cast<uint64_t>(r);
-                ctx.gpr[static_cast<size_t>(Reg::RDX)] = static_cast<uint64_t>(r >> 64);
-                bool overflow = (static_cast<int64_t>(ctx.gpr[static_cast<size_t>(Reg::RAX)]) != static_cast<int64_t>(r));
+                int64_t hi = 0;
+                uint64_t lo = 0;
+                Mul128S(static_cast<int64_t>(ctx.gpr[static_cast<size_t>(Reg::RAX)]), static_cast<int64_t>(v), hi, lo);
+                ctx.gpr[static_cast<size_t>(Reg::RAX)] = lo;
+                ctx.gpr[static_cast<size_t>(Reg::RDX)] = static_cast<uint64_t>(hi);
+                bool overflow = (hi != (static_cast<int64_t>(lo) >> 63));
                 ctx.set_flag(Flags::CF, overflow);
                 ctx.set_flag(Flags::OF, overflow);
             } else if (ext == 6) {
@@ -934,9 +984,11 @@ static StepResult ExecuteOne(CpuState& st)
         if ((modrm >> 6) == 3) {
             int64_t a = static_cast<int64_t>(ctx.gpr[rm]);
             int64_t b = static_cast<int64_t>(imm);
-            __int128 r = static_cast<__int128>(a) * b;
-            ctx.gpr[reg] = static_cast<uint64_t>(r);
-            bool overflow = (r != static_cast<int64_t>(r));
+            int64_t hi = 0;
+            uint64_t lo = 0;
+            Mul128S(a, b, hi, lo);
+            ctx.gpr[reg] = lo;
+            bool overflow = (hi != (static_cast<int64_t>(lo) >> 63));
             ctx.set_flag(Flags::CF, overflow);
             ctx.set_flag(Flags::OF, overflow);
         }
