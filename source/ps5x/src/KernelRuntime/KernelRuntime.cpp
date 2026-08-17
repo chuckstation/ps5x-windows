@@ -13,6 +13,15 @@
 #  define NOMINMAX
 #endif
 #  include <windows.h>
+#  ifdef CreateMutex
+#    undef CreateMutex
+#  endif
+#  ifdef CreateSemaphore
+#    undef CreateSemaphore
+#  endif
+#  ifdef CreateEvent
+#    undef CreateEvent
+#  endif
 #endif
 
 #include <atomic>

@@ -8,8 +8,12 @@
 #include "PS5x/RuntimeEvents/RuntimeEvents.h"
 #include "PS5x/Logger/Logger.h"
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
+#ifndef WIN32_LEAN_AND_MEAN
+#  define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
+#  define NOMINMAX
+#endif
 #include <algorithm>
 #include <chrono>
 #include <cstring>
@@ -23,6 +27,18 @@
 #include <windows.h>
 #include <dbghelp.h>
 #pragma comment(lib, "dbghelp.lib")
+#  ifdef ClearEventLog
+#    undef ClearEventLog
+#  endif
+#  ifdef CreateMutex
+#    undef CreateMutex
+#  endif
+#  ifdef CreateSemaphore
+#    undef CreateSemaphore
+#  endif
+#  ifdef CreateEvent
+#    undef CreateEvent
+#  endif
 #endif
 
 namespace PS5x::Debugger {
