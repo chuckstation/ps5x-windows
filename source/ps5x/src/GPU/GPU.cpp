@@ -4,12 +4,8 @@
 //
 // Windows-only: uses Win32 VirtualAlloc for GPU-visible host memory.
 // Null-backend mode (Init(nullptr)) is supported for headless testing.
-#ifndef WIN32_LEAN_AND_MEAN
-#  define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef NOMINMAX
-#  define NOMINMAX
-#endif
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include "PS5x/GPU/GPU.h"
 #include "PS5x/Logger/Logger.h"
 #include "PS5x/Renderer/RendererBackend.h"
@@ -134,15 +130,7 @@ bool Init(Renderer::IRendererBackend* backend)
         st.nullMode = false;
         PS5X_INFO("[GPU] Initialised with backend: %s", backend->Name().data());
     } else {
-#if defined(_WIN32)
-        char buf[MAX_PATH] = {};
-        if (::GetModuleFileNameA(nullptr, buf, sizeof(buf)) > 0) {
-            std::string path(buf);
-            if (path.find("test_gpu") != std::string::npos) {
-                return false;
-            }
-        }
-#else
+#if !defined(_WIN32)
         std::ifstream commFile("/proc/self/comm");
         std::string comm;
         if (commFile >> comm) {

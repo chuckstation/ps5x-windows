@@ -147,17 +147,9 @@ namespace WinMem {
     static int Munmap(void* addr, size_t length) {
         (void)length;
 #if defined(_WIN32)
-        if (addr) {
-            std::lock_guard<std::mutex> lk(mmapMtx);
-            auto it = std::find(mmapAllocs.begin(), mmapAllocs.end(), addr);
-            if (it != mmapAllocs.end()) {
-                ::VirtualFree(addr, 0, MEM_RELEASE);
-                mmapAllocs.erase(it);
-                return 0;
-            }
-            if (::VirtualFree(addr, 0, MEM_RELEASE) || ::GetLastError() == ERROR_INVALID_ADDRESS) {
-                return 0;
-            }
+        if (!::VirtualFree(addr, 0, MEM_RELEASE)) {
+            PS5X_WARN("[Syscall] munmap: VirtualFree failed err=%lu.", ::GetLastError());
+            return -1;
         }
         return 0;
 #else

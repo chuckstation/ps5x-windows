@@ -155,10 +155,8 @@ TEST_CASE("Debugger – WriteCrashDump creates file", "[dbg]")
 
     // At least one file should exist
     int fileCount = 0;
-    for (const auto& e : std::filesystem::directory_iterator(dumpDir)) {
-        auto ext = e.path().extension();
-        if (ext == ".txt" || ext == ".dmp") ++fileCount;
-    }
+    for (const auto& e : std::filesystem::directory_iterator(dumpDir))
+        if (e.path().extension() == ".txt") ++fileCount;
     REQUIRE(fileCount >= 1);
 
     std::filesystem::remove_all(dumpDir);

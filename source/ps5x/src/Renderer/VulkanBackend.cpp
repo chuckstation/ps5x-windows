@@ -14,12 +14,8 @@
 //
 // When the corresponding DLL / SDK is absent at runtime the backend's
 // Init() returns false and the factory falls back to the next option.
-#ifndef WIN32_LEAN_AND_MEAN
-#  define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef NOMINMAX
-#  define NOMINMAX
-#endif
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include "PS5x/Renderer/RendererBackend.h"
 #include "PS5x/Logger/Logger.h"
 
@@ -481,9 +477,8 @@ public:
         // Runtime-load vulkan-1.dll — graceful fail if absent
         hVulkan_ = ::LoadLibraryA("vulkan-1.dll");
         if (!hVulkan_) {
-            PS5X_WARN("[Vulkan] vulkan-1.dll not found — using headless stub mode.");
-            ready_ = true;
-            return true;
+            PS5X_WARN("[Vulkan] vulkan-1.dll not found — backend unavailable.");
+            return false;
         }
         using PFN_vkGetInstanceProcAddr_t = void*(*)(void*, const char*);
         auto vkGetInstanceProcAddr =

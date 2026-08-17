@@ -6,12 +6,8 @@
 // When PS5X_ENABLE_UI_WINDOW is defined, Dear ImGui (Win32 + DX12 backend)
 // is layered on top. Without it the pump runs headless for tests and CI.
 // SaveWorkspace/LoadWorkspace use a simple INI format.
-#ifndef WIN32_LEAN_AND_MEAN
-#  define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef NOMINMAX
-#  define NOMINMAX
-#endif
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include "PS5x/UI/UI.h"
 #include "PS5x/Config/Config.h"
 #include "PS5x/Cpu/Cpu.h"

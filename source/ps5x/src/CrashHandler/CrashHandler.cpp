@@ -13,12 +13,7 @@
 
 // ── Platform headers ────────────────────────────────────────────────────────
 #if defined(_WIN32)
-#   ifndef WIN32_LEAN_AND_MEAN
-#       define WIN32_LEAN_AND_MEAN
-#   endif
-#   ifndef NOMINMAX
-#       define NOMINMAX
-#   endif
+#   define WIN32_LEAN_AND_MEAN
 #   include <windows.h>
 #   include <dbghelp.h>
 #   pragma comment(lib, "dbghelp.lib")
