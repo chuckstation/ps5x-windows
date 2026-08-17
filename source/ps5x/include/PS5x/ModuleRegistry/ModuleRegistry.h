@@ -17,41 +17,48 @@
 #include <unordered_map>
 #include <vector>
 
-namespace PS5x::ModuleRegistry {
+namespace PS5x::ModuleRegistry
+{
 
 // ── Module ID ─────────────────────────────────────────────────────────────
 using ModuleId = uint32_t;
 static constexpr ModuleId INVALID_MODULE = 0;
 
 // ── Symbol visibility ─────────────────────────────────────────────────────
-enum class SymbolVis : uint8_t { Default=0, Hidden=1, Protected=2, Internal=3 };
+enum class SymbolVis : uint8_t
+{
+	Default = 0,
+	Hidden = 1,
+	Protected = 2,
+	Internal = 3
+};
 
 // ── Exported symbol ───────────────────────────────────────────────────────
 struct ExportedSymbol
 {
-    std::string  name;
-    uint64_t     address = 0;   ///< host-virtual address after relocation
-    uint64_t     size    = 0;
-    uint8_t      type    = 0;   ///< STT_FUNC / STT_OBJECT
-    SymbolVis    vis     = SymbolVis::Default;
-    ModuleId     owner   = INVALID_MODULE;
+	std::string name;
+	uint64_t address = 0; ///< host-virtual address after relocation
+	uint64_t size = 0;
+	uint8_t type = 0; ///< STT_FUNC / STT_OBJECT
+	SymbolVis vis = SymbolVis::Default;
+	ModuleId owner = INVALID_MODULE;
 };
 
 // ── Module descriptor ─────────────────────────────────────────────────────
 struct ModuleDesc
 {
-    ModuleId                     id         = INVALID_MODULE;
-    std::string                  name;
-    std::filesystem::path        path;
-    Loader::ExecutableInfo       elfInfo;
-    std::vector<ModuleId>        deps;       ///< modules this one depends on
-    std::vector<ExportedSymbol>  exports;
-    uint32_t                     refCount   = 0;
-    bool                         isMain     = false;
-    bool                         loaded     = false;
-    uint64_t                     loadTimeUs = 0;
-    uint64_t                     baseAddr   = 0;
-    uint64_t                     size       = 0;
+	ModuleId id = INVALID_MODULE;
+	std::string name;
+	std::filesystem::path path;
+	Loader::ExecutableInfo elfInfo;
+	std::vector<ModuleId> deps; ///< modules this one depends on
+	std::vector<ExportedSymbol> exports;
+	uint32_t refCount = 0;
+	bool isMain = false;
+	bool loaded = false;
+	uint64_t loadTimeUs = 0;
+	uint64_t baseAddr = 0;
+	uint64_t size = 0;
 };
 
 using Module = ModuleDesc;
@@ -59,25 +66,23 @@ using Module = ModuleDesc;
 // ── Relocation record ─────────────────────────────────────────────────────
 struct Relocation
 {
-    uint64_t    offset   = 0;   ///< host address of relocation site
-    uint64_t    addend   = 0;
-    std::string symbolName;
-    uint32_t    type     = 0;   ///< R_X86_64_*
-    ModuleId    module   = INVALID_MODULE;
+	uint64_t offset = 0; ///< host address of relocation site
+	uint64_t addend = 0;
+	std::string symbolName;
+	uint32_t type = 0; ///< R_X86_64_*
+	ModuleId module = INVALID_MODULE;
 };
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────
 bool Init();
 void Shutdown();
-void Reset();   ///< Unload all modules and clear registry.
+void Reset(); ///< Unload all modules and clear registry.
 
 // ── Registration ─────────────────────────────────────────────────────────
 
 /// Register a new module (e.g. the main executable after loading).
-ModuleId Register(const std::string& name,
-                  const std::filesystem::path& path,
-                  Loader::ExecutableInfo elfInfo,
-                  bool isMain = false);
+ModuleId Register(const std::string& name, const std::filesystem::path& path, Loader::ExecutableInfo elfInfo,
+				  bool isMain = false);
 
 ModuleId Register(const ModuleDesc& desc);
 
@@ -86,10 +91,10 @@ ModuleId Register(const ModuleDesc& desc);
 ModuleId Load(const std::filesystem::path& path);
 
 /// Decrement reference count; unload when it reaches zero.
-bool     Unload(ModuleId id);
+bool Unload(ModuleId id);
 
 /// Explicitly retain a module (increment refcount).
-bool     Retain(ModuleId id);
+bool Retain(ModuleId id);
 
 // ── Symbol resolution ─────────────────────────────────────────────────────
 
@@ -103,23 +108,23 @@ std::optional<ExportedSymbol> ResolveSymbolIn(ModuleId id, const std::string& na
 bool ApplyRelocations(ModuleId id);
 
 // ── Queries ───────────────────────────────────────────────────────────────
-std::optional<ModuleDesc>     GetModule(ModuleId id);
-std::optional<ModuleDesc>     GetModuleByName(const std::string& name);
-std::vector<ModuleDesc>       GetAllModules();
-std::vector<ModuleDesc>       GetAll(); // Compatibility alias for GetAllModules
-std::vector<ModuleId>         GetLoadOrder();      ///< topological load order
-ModuleId                      GetMainModule();
-uint32_t                      GetModuleCount();
+std::optional<ModuleDesc> GetModule(ModuleId id);
+std::optional<ModuleDesc> GetModuleByName(const std::string& name);
+std::vector<ModuleDesc> GetAllModules();
+std::vector<ModuleDesc> GetAll();     // Compatibility alias for GetAllModules
+std::vector<ModuleId> GetLoadOrder(); ///< topological load order
+ModuleId GetMainModule();
+uint32_t GetModuleCount();
 
 /// Return all dependency IDs for a given module (direct only).
-std::vector<ModuleId>         GetDependencies(ModuleId id);
+std::vector<ModuleId> GetDependencies(ModuleId id);
 
 /// Return all modules that directly depend on this one.
-std::vector<ModuleId>         GetDependents(ModuleId id);
+std::vector<ModuleId> GetDependents(ModuleId id);
 
 // ── Diagnostics ───────────────────────────────────────────────────────────
-void DumpModules();                    ///< Log full module list
-void DumpSymbols(ModuleId id);         ///< Log all exports of a module
-void DumpDependencyGraph();            ///< Log the dep graph
+void DumpModules();            ///< Log full module list
+void DumpSymbols(ModuleId id); ///< Log all exports of a module
+void DumpDependencyGraph();    ///< Log the dep graph
 
 } // namespace PS5x::ModuleRegistry

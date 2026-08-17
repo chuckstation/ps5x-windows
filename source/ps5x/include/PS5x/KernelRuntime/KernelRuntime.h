@@ -15,7 +15,8 @@
 #include <string_view>
 #include <vector>
 
-namespace PS5x::KernelRuntime {
+namespace PS5x::KernelRuntime
+{
 
 // ── Handle system ─────────────────────────────────────────────────────────
 using KHandle = int32_t;
@@ -23,15 +24,15 @@ static constexpr KHandle INVALID_HANDLE = -1;
 
 enum class KObjectType : uint8_t
 {
-    Unknown   = 0,
-    Thread    = 1,
-    Mutex     = 2,
-    Semaphore = 3,
-    Event     = 4,
-    Timer     = 5,
-    File      = 6,
-    Socket    = 7,
-    Module    = 8,
+	Unknown = 0,
+	Thread = 1,
+	Mutex = 2,
+	Semaphore = 3,
+	Event = 4,
+	Timer = 5,
+	File = 6,
+	Socket = 7,
+	Module = 8,
 };
 
 const char* KObjectTypeName(KObjectType t);
@@ -39,54 +40,54 @@ const char* KObjectTypeName(KObjectType t);
 // ── Thread ────────────────────────────────────────────────────────────────
 enum class ThreadState : uint8_t
 {
-    Created   = 0,
-    Running   = 1,
-    Sleeping  = 2,
-    Waiting   = 3,
-    Stopped   = 4,
-    Dead      = 5,
+	Created = 0,
+	Running = 1,
+	Sleeping = 2,
+	Waiting = 3,
+	Stopped = 4,
+	Dead = 5,
 };
 
 using ThreadEntryFn = std::function<int(void* arg)>;
 
 struct ThreadAttr
 {
-    std::string  name;
-    size_t       stackSize   = 256 * 1024;  // 256 KiB default
-    int          priority    = 700;         // PS5 priority (256–767)
-    uint64_t     affinityMask = 0xFF;       // all cores
+	std::string name;
+	size_t stackSize = 256 * 1024; // 256 KiB default
+	int priority = 700;            // PS5 priority (256–767)
+	uint64_t affinityMask = 0xFF;  // all cores
 };
 
 struct ThreadInfo
 {
-    KHandle     handle      = INVALID_HANDLE;
-    std::string name;
-    ThreadState state       = ThreadState::Created;
-    int         priority    = 700;
-    uint64_t    stackBase   = 0;
-    size_t      stackSize   = 0;
-    uint64_t    tlsBase     = 0;
-    uint64_t    startTime   = 0;  // microseconds
-    int         exitCode    = 0;
+	KHandle handle = INVALID_HANDLE;
+	std::string name;
+	ThreadState state = ThreadState::Created;
+	int priority = 700;
+	uint64_t stackBase = 0;
+	size_t stackSize = 0;
+	uint64_t tlsBase = 0;
+	uint64_t startTime = 0; // microseconds
+	int exitCode = 0;
 };
 
 // ── Synchronisation ───────────────────────────────────────────────────────
 struct MutexAttr
 {
-    bool recursive = false;
-    bool shared    = false;
+	bool recursive = false;
+	bool shared = false;
 };
 
 struct SemaphoreAttr
 {
-    int32_t initialValue = 0;
-    int32_t maxValue     = INT32_MAX;
+	int32_t initialValue = 0;
+	int32_t maxValue = INT32_MAX;
 };
 
 struct EventAttr
 {
-    bool autoReset   = false;  ///< auto-clear after first waiter wakes
-    bool initialSet  = false;
+	bool autoReset = false; ///< auto-clear after first waiter wakes
+	bool initialSet = false;
 };
 
 // ── Timer ─────────────────────────────────────────────────────────────────
@@ -94,8 +95,8 @@ using TimerCallbackFn = std::function<void(KHandle timerId, void* arg)>;
 
 struct TimerAttr
 {
-    uint64_t periodUs  = 0;    ///< 0 = one-shot
-    bool     autoStart = false;
+	uint64_t periodUs = 0; ///< 0 = one-shot
+	bool autoStart = false;
 };
 
 // ── TLS ───────────────────────────────────────────────────────────────────
@@ -106,73 +107,73 @@ using TlsDestructorFn = std::function<void(void*)>;
 // ── Lifecycle ─────────────────────────────────────────────────────────────
 bool Init();
 void Shutdown();
-void Reset();   ///< Destroy all kernel objects (between program runs)
+void Reset(); ///< Destroy all kernel objects (between program runs)
 
 // ── Handle table ─────────────────────────────────────────────────────────
 KObjectType GetHandleType(KHandle h);
-bool        CloseHandle(KHandle h);
+bool CloseHandle(KHandle h);
 
 // ── Threads ───────────────────────────────────────────────────────────────
-KHandle     CreateThread(ThreadEntryFn fn, void* arg, const ThreadAttr& attr);
-bool        StartThread(KHandle h);
-bool        StopThread(KHandle h);
-bool        JoinThread(KHandle h, int* exitCode = nullptr, uint64_t timeoutUs = UINT64_MAX);
-bool        SetThreadPriority(KHandle h, int priority);
-bool        SetThreadAffinity(KHandle h, uint64_t mask);
-ThreadInfo  GetThreadInfo(KHandle h);
+KHandle CreateThread(ThreadEntryFn fn, void* arg, const ThreadAttr& attr);
+bool StartThread(KHandle h);
+bool StopThread(KHandle h);
+bool JoinThread(KHandle h, int* exitCode = nullptr, uint64_t timeoutUs = UINT64_MAX);
+bool SetThreadPriority(KHandle h, int priority);
+bool SetThreadAffinity(KHandle h, uint64_t mask);
+ThreadInfo GetThreadInfo(KHandle h);
 std::vector<ThreadInfo> GetAllThreads();
-KHandle     GetCurrentThreadHandle();
+KHandle GetCurrentThreadHandle();
 
 // ── Mutex ─────────────────────────────────────────────────────────────────
-KHandle Lock(KHandle h);   // convenience – lock + return same handle
-KHandle     CreateMutex(const MutexAttr& attr = {}, std::string_view name = "");
-bool        LockMutex(KHandle h);
-bool        TryLockMutex(KHandle h);
-bool        UnlockMutex(KHandle h);
+KHandle Lock(KHandle h); // convenience – lock + return same handle
+KHandle CreateMutex(const MutexAttr& attr = {}, std::string_view name = "");
+bool LockMutex(KHandle h);
+bool TryLockMutex(KHandle h);
+bool UnlockMutex(KHandle h);
 
 // ── Semaphore ─────────────────────────────────────────────────────────────
-KHandle     CreateSemaphore(const SemaphoreAttr& attr, std::string_view name = "");
-bool        WaitSemaphore(KHandle h, uint64_t timeoutUs = UINT64_MAX);
-bool        SignalSemaphore(KHandle h, int32_t count = 1);
-int32_t     GetSemaphoreValue(KHandle h);
+KHandle CreateSemaphore(const SemaphoreAttr& attr, std::string_view name = "");
+bool WaitSemaphore(KHandle h, uint64_t timeoutUs = UINT64_MAX);
+bool SignalSemaphore(KHandle h, int32_t count = 1);
+int32_t GetSemaphoreValue(KHandle h);
 
 // ── Event ─────────────────────────────────────────────────────────────────
-KHandle     CreateEvent(const EventAttr& attr = {}, std::string_view name = "");
-bool        SetEvent(KHandle h);
-bool        ClearEvent(KHandle h);
-bool        WaitEvent(KHandle h, uint64_t timeoutUs = UINT64_MAX);
+KHandle CreateEvent(const EventAttr& attr = {}, std::string_view name = "");
+bool SetEvent(KHandle h);
+bool ClearEvent(KHandle h);
+bool WaitEvent(KHandle h, uint64_t timeoutUs = UINT64_MAX);
 
 // ── Timer ─────────────────────────────────────────────────────────────────
-KHandle     CreateTimer(const TimerAttr& attr, TimerCallbackFn cb, void* arg = nullptr,
-                         std::string_view name = "");
-bool        StartTimer(KHandle h);
-bool        StopTimer(KHandle h);
-bool        CancelTimer(KHandle h);
+KHandle CreateTimer(const TimerAttr& attr, TimerCallbackFn cb, void* arg = nullptr, std::string_view name = "");
+bool StartTimer(KHandle h);
+bool StopTimer(KHandle h);
+bool CancelTimer(KHandle h);
 
 // ── Thread-Local Storage ──────────────────────────────────────────────────
-TlsKey      TlsAlloc(TlsDestructorFn dtor = {});
-bool        TlsFree(TlsKey key);
-bool        TlsSet(TlsKey key, void* value);
-void*       TlsGet(TlsKey key);
+TlsKey TlsAlloc(TlsDestructorFn dtor = {});
+bool TlsFree(TlsKey key);
+bool TlsSet(TlsKey key, void* value);
+void* TlsGet(TlsKey key);
 
 // ── Statistics ────────────────────────────────────────────────────────────
 struct KernelStats
 {
-    uint32_t totalThreads    = 0;
-    uint32_t runningThreads  = 0;
-    uint32_t totalMutexes    = 0;
-    uint32_t totalSemaphores = 0;
-    uint32_t totalEvents     = 0;
-    uint32_t totalTimers     = 0;
-    uint32_t totalHandles    = 0;
+	uint32_t totalThreads = 0;
+	uint32_t runningThreads = 0;
+	uint32_t totalMutexes = 0;
+	uint32_t totalSemaphores = 0;
+	uint32_t totalEvents = 0;
+	uint32_t totalTimers = 0;
+	uint32_t totalHandles = 0;
 };
 KernelStats GetStats();
 
-
-
 // ── Phase 6: Object namespaces ────────────────────────────────────────────
 
-struct NamespaceId { uint32_t value = 0; };
+struct NamespaceId
+{
+	uint32_t value = 0;
+};
 static constexpr NamespaceId ROOT_NS{0};
 
 /// Register a kernel object under a name in a namespace.
@@ -214,10 +215,10 @@ KHandle DuplicateHandle(KHandle src);
 
 struct ResourceLimits
 {
-    size_t   maxMemoryBytes  = SIZE_MAX;
-    uint32_t maxThreads      = 512;
-    uint32_t maxHandles      = 65536;
-    uint32_t maxOpenFiles    = 1024;
+	size_t maxMemoryBytes = SIZE_MAX;
+	uint32_t maxThreads = 512;
+	uint32_t maxHandles = 65536;
+	uint32_t maxOpenFiles = 1024;
 };
 
 void SetResourceLimits(const ResourceLimits& limits);
@@ -242,13 +243,12 @@ bool IpcSend(IpcPortHandle h, const void* data, size_t size);
 
 /// Receive raw bytes from an IPC port.
 /// Returns bytes received or -1 on error.
-int64_t IpcRecv(IpcPortHandle h, void* buf, size_t bufSize,
-                uint64_t timeoutUs = UINT64_MAX);
+int64_t IpcRecv(IpcPortHandle h, void* buf, size_t bufSize, uint64_t timeoutUs = UINT64_MAX);
 
 // ── Phase 8: Generic handle allocator ────────────────────────────────────
 /// Allocate a handle of the given ObjectType. Returns a unique KHandle.
 KHandle AllocHandle(KObjectType type);
 /// Free a previously allocated handle.
-void    FreeHandle(KHandle h);
+void FreeHandle(KHandle h);
 
 } // namespace PS5x::KernelRuntime

@@ -16,17 +16,18 @@
 #include <string>
 #include <vector>
 
-namespace PS5x::ShaderCache {
+namespace PS5x::ShaderCache
+{
 
 // ── Shader stage ──────────────────────────────────────────────────────────
 enum class ShaderStage : uint8_t
 {
-    Vertex   = 0,
-    Fragment = 1,
-    Compute  = 2,
-    Geometry = 3,
-    TessCtrl = 4,
-    TessEval = 5,
+	Vertex = 0,
+	Fragment = 1,
+	Compute = 2,
+	Geometry = 3,
+	TessCtrl = 4,
+	TessEval = 5,
 };
 const char* StageName(ShaderStage s);
 
@@ -34,53 +35,50 @@ const char* StageName(ShaderStage s);
 /// Uniquely identifies a shader variant: hash of SPIR-V + pipeline state hash.
 struct ShaderKey
 {
-    uint64_t spirvHash     = 0;
-    uint64_t pipelineHash  = 0;
-    ShaderStage stage      = ShaderStage::Vertex;
+	uint64_t spirvHash = 0;
+	uint64_t pipelineHash = 0;
+	ShaderStage stage = ShaderStage::Vertex;
 
-    bool operator==(const ShaderKey& o) const {
-        return spirvHash == o.spirvHash &&
-               pipelineHash == o.pipelineHash &&
-               stage == o.stage;
-    }
+	bool operator==(const ShaderKey& o) const
+	{
+		return spirvHash == o.spirvHash && pipelineHash == o.pipelineHash && stage == o.stage;
+	}
 };
 
 // ── Compiled shader entry ─────────────────────────────────────────────────
 struct CacheEntry
 {
-    ShaderKey             key;
-    std::vector<uint8_t>  binary;        ///< platform-specific compiled binary
-    std::vector<uint8_t>  spirv;         ///< original SPIR-V (for re-compilation)
-    uint64_t              compiledAtUs   = 0;
-    uint64_t              lastUsedUs     = 0;
-    uint32_t              hitCount       = 0;
-    double                compilationMs  = 0.0;
-    std::string           debugName;
-    bool                  valid          = false;
+	ShaderKey key;
+	std::vector<uint8_t> binary; ///< platform-specific compiled binary
+	std::vector<uint8_t> spirv;  ///< original SPIR-V (for re-compilation)
+	uint64_t compiledAtUs = 0;
+	uint64_t lastUsedUs = 0;
+	uint32_t hitCount = 0;
+	double compilationMs = 0.0;
+	std::string debugName;
+	bool valid = false;
 };
 
 // ── Statistics ────────────────────────────────────────────────────────────
 struct CacheStats
 {
-    uint32_t  entries          = 0;
-    uint64_t  hits             = 0;
-    uint64_t  misses           = 0;
-    uint64_t  evictions        = 0;
-    uint64_t  compilations     = 0;
-    double    totalCompileMs   = 0.0;
-    double    avgCompileMs     = 0.0;
-    size_t    diskBytes        = 0;
-    uint32_t  pendingJobs      = 0;
+	uint32_t entries = 0;
+	uint64_t hits = 0;
+	uint64_t misses = 0;
+	uint64_t evictions = 0;
+	uint64_t compilations = 0;
+	double totalCompileMs = 0.0;
+	double avgCompileMs = 0.0;
+	size_t diskBytes = 0;
+	uint32_t pendingJobs = 0;
 };
 
 // ── Compilation callback ──────────────────────────────────────────────────
 /// Returns compiled binary bytes on success, empty on failure.
-using CompileFn = std::function<std::vector<uint8_t>(
-    const std::vector<uint8_t>& spirv, ShaderStage stage)>;
+using CompileFn = std::function<std::vector<uint8_t>(const std::vector<uint8_t>& spirv, ShaderStage stage)>;
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────
-bool Init(const std::filesystem::path& cacheDir = "",
-          size_t maxEntries = 4096);
+bool Init(const std::filesystem::path& cacheDir = "", size_t maxEntries = 4096);
 void Shutdown();
 
 // ── Compilation ───────────────────────────────────────────────────────────
@@ -98,15 +96,12 @@ std::optional<CacheEntry> Lookup(const ShaderKey& key);
 
 /// Compile and cache a shader synchronously.
 /// Returns the cache entry on success.
-std::optional<CacheEntry> Compile(const ShaderKey& key,
-                                   const std::vector<uint8_t>& spirv,
-                                   const std::string& debugName = "");
+std::optional<CacheEntry> Compile(const ShaderKey& key, const std::vector<uint8_t>& spirv,
+								  const std::string& debugName = "");
 
 /// Submit a shader for background compilation.
 /// The entry is inserted into the cache when ready.
-void QueueCompile(const ShaderKey& key,
-                  const std::vector<uint8_t>& spirv,
-                  const std::string& debugName = "");
+void QueueCompile(const ShaderKey& key, const std::vector<uint8_t>& spirv, const std::string& debugName = "");
 
 /// Block until all queued compilations complete.
 void FlushQueue();
@@ -132,6 +127,6 @@ uint32_t Evict(uint64_t maxAgeUs);
 
 // ── Statistics ────────────────────────────────────────────────────────────
 CacheStats GetStats();
-void       DumpStats();
+void DumpStats();
 
 } // namespace PS5x::ShaderCache

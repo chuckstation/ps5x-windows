@@ -21,8 +21,8 @@
 #define NOMINMAX
 #endif
 // clang-format off
-#include <windows.h>
-#include <dbghelp.h>
+#   include <windows.h>
+#   include <dbghelp.h>
 // clang-format on
 #pragma comment(lib, "dbghelp.lib")
 #else

@@ -15,26 +15,27 @@
 #include <filesystem>
 #include <string_view>
 
-namespace PS5x::KytyAdapter {
+namespace PS5x::KytyAdapter
+{
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────
 /// Initialize the Kyty subsystems needed by PS5x.
 /// On non-Windows builds or when Kyty is excluded this is a no-op.
 bool Init();
 void Shutdown();
-bool IsAvailable();   ///< True if the Kyty runtime is live.
+bool IsAvailable(); ///< True if the Kyty runtime is live.
 
 // ── Runtime linker bridge ─────────────────────────────────────────────────
 /// Load a PS5 ELF through Kyty's RuntimeLinker.
 /// Returns 0 on success, negative on error.
-int  LoadProgram(const std::filesystem::path& path);
-int  ExecuteProgram();
+int LoadProgram(const std::filesystem::path& path);
+int ExecuteProgram();
 void UnloadProgram();
 
 // ── Kernel bridge ─────────────────────────────────────────────────────────
 /// Allocate virtual memory via Kyty's memory subsystem.
 void* VirtualAlloc(void* hint, uint64_t size, int prot);
-bool  VirtualFree(void* addr);
+bool VirtualFree(void* addr);
 
 // ── Graphics bridge ───────────────────────────────────────────────────────
 /// Initialise Kyty's Vulkan layer (delegates to Kyty's GraphicsRender).

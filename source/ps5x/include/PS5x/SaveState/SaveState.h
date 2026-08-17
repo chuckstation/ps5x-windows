@@ -16,39 +16,46 @@
 #include <string>
 #include <vector>
 
-namespace PS5x::Cpu { struct CpuContext; }
+namespace PS5x::Cpu
+{
+struct CpuContext;
+}
 
-namespace PS5x::SaveState {
+namespace PS5x::SaveState
+{
 
 // ── On-disk header ────────────────────────────────────────────────────────
-struct SaveStateHeader {
-    char     magic[8]       = {'P','S','5','x','S','S','\0','\0'};
-    uint32_t version        = 1;
-    uint64_t timestamp      = 0;        // Unix epoch ms
-    char     gameName[128]  = {};
-    char     description[256] = {};
-    uint32_t cpuStateSize   = 0;
-    uint32_t memoryMapSize  = 0;
-    uint32_t gpuStateSize   = 0;
-    uint32_t checksum       = 0;        // CRC32 of payload
+struct SaveStateHeader
+{
+	char magic[8] = {'P', 'S', '5', 'x', 'S', 'S', '\0', '\0'};
+	uint32_t version = 1;
+	uint64_t timestamp = 0; // Unix epoch ms
+	char gameName[128] = {};
+	char description[256] = {};
+	uint32_t cpuStateSize = 0;
+	uint32_t memoryMapSize = 0;
+	uint32_t gpuStateSize = 0;
+	uint32_t checksum = 0; // CRC32 of payload
 };
 
 // ── Result codes ──────────────────────────────────────────────────────────
-enum class SaveResult : uint8_t {
-    Ok = 0,
-    FileError,
-    InvalidState,
-    DiskFull,
-    ChecksumMismatch,
+enum class SaveResult : uint8_t
+{
+	Ok = 0,
+	FileError,
+	InvalidState,
+	DiskFull,
+	ChecksumMismatch,
 };
 
-enum class LoadResult : uint8_t {
-    Ok = 0,
-    FileNotFound,
-    CorruptFile,
-    VersionMismatch,
-    ChecksumMismatch,
-    MemoryConflict,
+enum class LoadResult : uint8_t
+{
+	Ok = 0,
+	FileNotFound,
+	CorruptFile,
+	VersionMismatch,
+	ChecksumMismatch,
+	MemoryConflict,
 };
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────
