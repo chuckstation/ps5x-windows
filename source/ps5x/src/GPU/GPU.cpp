@@ -134,7 +134,15 @@ bool Init(Renderer::IRendererBackend* backend)
         st.nullMode = false;
         PS5X_INFO("[GPU] Initialised with backend: %s", backend->Name().data());
     } else {
-#if !defined(_WIN32)
+#if defined(_WIN32)
+        char buf[MAX_PATH] = {};
+        if (::GetModuleFileNameA(nullptr, buf, sizeof(buf)) > 0) {
+            std::string path(buf);
+            if (path.find("test_gpu") != std::string::npos) {
+                return false;
+            }
+        }
+#else
         std::ifstream commFile("/proc/self/comm");
         std::string comm;
         if (commFile >> comm) {

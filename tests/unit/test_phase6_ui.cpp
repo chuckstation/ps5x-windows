@@ -142,7 +142,7 @@ TEST_CASE("Phase6::UI::Feed::MultipleUpdatesNoRace", "[ui][phase6]")
 
 TEST_CASE("Phase6::UI::Workspace::SaveAndLoad", "[ui][phase6]")
 {
-    std::string path = "/tmp/ps5x_test_workspace.txt";
+    std::string path = (std::filesystem::temp_directory_path() / "ps5x_test_workspace.txt").string();
 
     // Set a known state
     PanelState s;
@@ -176,10 +176,12 @@ TEST_CASE("Phase6::UI::Workspace::SaveAndLoad", "[ui][phase6]")
 
 TEST_CASE("Phase6::UI::Workspace::SaveToInvalidPath", "[ui][phase6]")
 {
-    CHECK_FALSE(SaveWorkspace("/no_such_dir/workspace.txt"));
+    std::string badPath = (std::filesystem::temp_directory_path() / "nonexistent_dir_xyz/workspace.txt").string();
+    CHECK_FALSE(SaveWorkspace(badPath));
 }
 
 TEST_CASE("Phase6::UI::Workspace::LoadMissingFile", "[ui][phase6]")
 {
-    CHECK_FALSE(LoadWorkspace("/tmp/ps5x_nonexistent_workspace_xyz.txt"));
+    std::string missingPath = (std::filesystem::temp_directory_path() / "ps5x_nonexistent_workspace_xyz.txt").string();
+    CHECK_FALSE(LoadWorkspace(missingPath));
 }
