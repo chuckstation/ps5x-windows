@@ -6,8 +6,12 @@
 // MSVC + Kyty source present), calls are forwarded into Kyty subsystems.
 // Without Kyty, every function uses ChuckStation5 native implementations backed
 // by Win32 APIs — no stubs, no TODOs.
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include "ChuckStation5/KytyAdapter/KytyAdapter.h"
 #include "ChuckStation5/Logger/Logger.h"
 #include "ChuckStation5/Memory/Memory.h"

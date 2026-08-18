@@ -1,4 +1,4 @@
-name: PS5x CI (Windows)
+name: ChuckStation 5 CI (Windows)
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-release:
-    name: Build PS5x Release (Windows x64)
+    name: Build ChuckStation 5 Release (Windows x64)
     runs-on: windows-2022
 
     steps:
@@ -21,12 +21,12 @@ jobs:
             -G "Visual Studio 17 2022" `
             -A x64 `
             -DCMAKE_BUILD_TYPE=Release `
-            -DPS5X_ENABLE_DX12=ON `
-            -DPS5X_ENABLE_DX11=ON `
-            -DPS5X_ENABLE_CRASH_HANDLER=ON `
-            -DPS5X_ENABLE_METRICS=ON `
-            -DPS5X_ENABLE_SAVESTATES=ON `
-            -DPS5X_ENABLE_INPUT_MAPPING=ON
+            -DCHUCKSTATION5_ENABLE_DX12=ON `
+            -DCHUCKSTATION5_ENABLE_DX11=ON `
+            -DCHUCKSTATION5_ENABLE_CRASH_HANDLER=ON `
+            -DCHUCKSTATION5_ENABLE_METRICS=ON `
+            -DCHUCKSTATION5_ENABLE_SAVESTATES=ON `
+            -DCHUCKSTATION5_ENABLE_INPUT_MAPPING=ON
 
       - name: Build
         run: cmake --build build --config Release --parallel
