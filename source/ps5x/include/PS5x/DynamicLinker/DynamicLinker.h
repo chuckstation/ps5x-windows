@@ -20,21 +20,20 @@
 #include <unordered_map>
 #include <vector>
 
-namespace PS5x::DynamicLinker
-{
+namespace PS5x::DynamicLinker {
 
 // ── Relocation types (x86-64 ELF) ────────────────────────────────────────
 enum class RelocType : uint32_t
 {
-	None = 0,
-	R64 = 1,      ///< R_X86_64_64:        S + A
-	PC32 = 2,     ///< R_X86_64_PC32:      S + A - P
-	GlobDat = 6,  ///< R_X86_64_GLOB_DAT:  S
-	JumpSlot = 7, ///< R_X86_64_JUMP_SLOT: S
-	Relative = 8, ///< R_X86_64_RELATIVE:  B + A
-	GotPcRel = 9, ///< R_X86_64_GOTPCREL
-	Size32 = 32,
-	Size64 = 33,
+    None         = 0,
+    R64          = 1,   ///< R_X86_64_64:        S + A
+    PC32         = 2,   ///< R_X86_64_PC32:      S + A - P
+    GlobDat      = 6,   ///< R_X86_64_GLOB_DAT:  S
+    JumpSlot     = 7,   ///< R_X86_64_JUMP_SLOT: S
+    Relative     = 8,   ///< R_X86_64_RELATIVE:  B + A
+    GotPcRel     = 9,   ///< R_X86_64_GOTPCREL
+    Size32       = 32,
+    Size64       = 33,
 };
 
 const char* RelocTypeName(RelocType t);
@@ -42,31 +41,31 @@ const char* RelocTypeName(RelocType t);
 // ── Relocation entry ──────────────────────────────────────────────────────
 struct RelocEntry
 {
-	uint64_t offset = 0; ///< host address of patch site
-	RelocType type = RelocType::None;
-	std::string symbolName;
-	int64_t addend = 0;
-	uint32_t symModuleId = ModuleRegistry::INVALID_MODULE;
-	bool resolved = false;
-	bool lazy = false; ///< JUMP_SLOT – lazily resolved
+    uint64_t    offset     = 0;   ///< host address of patch site
+    RelocType   type       = RelocType::None;
+    std::string symbolName;
+    int64_t     addend     = 0;
+    uint32_t    symModuleId = ModuleRegistry::INVALID_MODULE;
+    bool        resolved   = false;
+    bool        lazy       = false;   ///< JUMP_SLOT – lazily resolved
 };
 
 // ── Symbol cache entry ─────────────────────────────────────────────────────
 struct CachedSymbol
 {
-	std::string name;
-	uint64_t address = 0;
-	uint32_t moduleId = ModuleRegistry::INVALID_MODULE;
-	uint64_t hitCount = 0;
+    std::string   name;
+    uint64_t      address   = 0;
+    uint32_t      moduleId  = ModuleRegistry::INVALID_MODULE;
+    uint64_t      hitCount  = 0;
 };
 
 // ── Link result ───────────────────────────────────────────────────────────
 struct LinkResult
 {
-	uint32_t resolved = 0;
-	uint32_t unresolved = 0;
-	uint32_t lazy = 0;
-	std::vector<std::string> missingSymbols;
+    uint32_t resolved       = 0;
+    uint32_t unresolved     = 0;
+    uint32_t lazy           = 0;
+    std::vector<std::string> missingSymbols;
 };
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -92,7 +91,8 @@ bool ApplyReloc(const RelocEntry& reloc);
 std::optional<CachedSymbol> LookupSymbol(const std::string& name);
 
 /// Resolve a symbol in a specific module.
-std::optional<CachedSymbol> LookupSymbolIn(ModuleRegistry::ModuleId id, const std::string& name);
+std::optional<CachedSymbol> LookupSymbolIn(ModuleRegistry::ModuleId id,
+                                            const std::string& name);
 
 /// Invalidate the symbol cache for a module (call on unload).
 void InvalidateCache(ModuleRegistry::ModuleId id);
@@ -128,13 +128,13 @@ void DumpLinkResult(const LinkResult& r);
 // ── Statistics ────────────────────────────────────────────────────────────
 struct LinkerStats
 {
-	uint64_t cacheHits = 0;
-	uint64_t cacheMisses = 0;
-	uint32_t totalRelocations = 0;
-	uint32_t resolvedRelocs = 0;
-	uint32_t unresolvedRelocs = 0;
-	uint32_t lazyRelocs = 0;
-	uint32_t cacheEntries = 0;
+    uint64_t  cacheHits         = 0;
+    uint64_t  cacheMisses       = 0;
+    uint32_t  totalRelocations  = 0;
+    uint32_t  resolvedRelocs    = 0;
+    uint32_t  unresolvedRelocs  = 0;
+    uint32_t  lazyRelocs        = 0;
+    uint32_t  cacheEntries      = 0;
 };
 LinkerStats GetStats();
 

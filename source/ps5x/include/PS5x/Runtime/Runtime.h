@@ -15,27 +15,26 @@
 #include <string>
 #include <vector>
 
-namespace PS5x::Runtime
-{
+namespace PS5x::Runtime {
 
 // ── Subsystem IDs (topological order) ────────────────────────────────────
 enum class SubsystemId : uint32_t
 {
-	Logger = 0,
-	Config = 1,
-	Memory = 2,
-	Kernel = 3,
-	Filesystem = 4,
-	Loader = 5,
-	KytyAdapter = 6,
-	Renderer = 7,
-	GPU = 8,
-	Audio = 9,
-	Input = 10,
-	Process = 11,
-	Debugger = 12,
-	UI = 13,
-	COUNT = 14,
+    Logger      = 0,
+    Config      = 1,
+    Memory      = 2,
+    Kernel      = 3,
+    Filesystem  = 4,
+    Loader      = 5,
+    KytyAdapter = 6,
+    Renderer    = 7,
+    GPU         = 8,
+    Audio       = 9,
+    Input       = 10,
+    Process     = 11,
+    Debugger    = 12,
+    UI          = 13,
+    COUNT       = 14,
 };
 
 const char* SubsystemName(SubsystemId id);
@@ -43,13 +42,13 @@ const char* SubsystemName(SubsystemId id);
 // ── Subsystem state ───────────────────────────────────────────────────────
 enum class SubsystemState : uint8_t
 {
-	Unregistered = 0,
-	Registered = 1,
-	Initialising = 2,
-	Running = 3,
-	ShuttingDown = 4,
-	Stopped = 5,
-	Failed = 6,
+    Unregistered = 0,
+    Registered   = 1,
+    Initialising = 2,
+    Running      = 3,
+    ShuttingDown = 4,
+    Stopped      = 5,
+    Failed       = 6,
 };
 
 const char* SubsystemStateName(SubsystemState s);
@@ -57,26 +56,26 @@ const char* SubsystemStateName(SubsystemState s);
 // ── Timing record ─────────────────────────────────────────────────────────
 struct SubsystemTiming
 {
-	SubsystemId id = SubsystemId::COUNT;
-	SubsystemState state = SubsystemState::Unregistered;
-	double initMs = 0.0; ///< milliseconds to initialise
-	double shutdownMs = 0.0;
-	std::string failReason;
+    SubsystemId  id           = SubsystemId::COUNT;
+    SubsystemState state      = SubsystemState::Unregistered;
+    double       initMs       = 0.0;   ///< milliseconds to initialise
+    double       shutdownMs   = 0.0;
+    std::string  failReason;
 };
 
 // ── Callbacks ─────────────────────────────────────────────────────────────
-using InitFn = std::function<bool()>;
+using InitFn     = std::function<bool()>;
 using ShutdownFn = std::function<void()>;
 
 // ── Subsystem descriptor ──────────────────────────────────────────────────
 struct SubsystemDesc
 {
-	SubsystemId id;
-	std::string name;
-	InitFn init;
-	ShutdownFn shutdown;
-	std::vector<SubsystemId> deps; ///< must be Running before this starts
-	bool optional = false;         ///< failure doesn't abort startup
+    SubsystemId              id;
+    std::string              name;
+    InitFn                   init;
+    ShutdownFn               shutdown;
+    std::vector<SubsystemId> deps;      ///< must be Running before this starts
+    bool                     optional = false; ///< failure doesn't abort startup
 };
 
 // ── Runtime Manager ───────────────────────────────────────────────────────
@@ -101,10 +100,10 @@ bool InitOne(SubsystemId id);
 void ShutdownOne(SubsystemId id);
 
 // ── Queries ───────────────────────────────────────────────────────────────
-SubsystemState GetState(SubsystemId id);
-bool IsRunning(SubsystemId id);
+SubsystemState           GetState(SubsystemId id);
+bool                     IsRunning(SubsystemId id);
 std::optional<SubsystemTiming> GetTiming(SubsystemId id);
-std::vector<SubsystemTiming> GetAllTimings();
+std::vector<SubsystemTiming>   GetAllTimings();
 
 /// Log a formatted timing report to the PS5x logger.
 void ReportTimings();

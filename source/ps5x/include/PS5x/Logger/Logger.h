@@ -10,19 +10,18 @@
 #include <string>
 #include <string_view>
 
-namespace PS5x::Logger
-{
+namespace PS5x::Logger {
 
 /// Severity levels (ordered lowest → highest).
 enum class Level : uint8_t
 {
-	Trace = 0,
-	Debug = 1,
-	Info = 2,
-	Warning = 3,
-	Error = 4,
-	Fatal = 5,
-	Off = 255,
+    Trace   = 0,
+    Debug   = 1,
+    Info    = 2,
+    Warning = 3,
+    Error   = 4,
+    Fatal   = 5,
+    Off     = 255,
 };
 
 /// Callback type for external log sinks (e.g. UI console pane).
@@ -51,14 +50,15 @@ void ClearSinks();
 
 /// Low-level write – prefer the macros below.
 void Write(Level level, std::string_view tag, std::string_view message,
-		   const std::source_location& loc = std::source_location::current());
+           const std::source_location& loc = std::source_location::current());
 
 /// printf-style variant.
-void WriteF(Level level, std::string_view tag, const std::source_location& loc, const char* fmt, ...)
+void WriteF(Level level, std::string_view tag,
+            const std::source_location& loc, const char* fmt, ...)
 #if (defined(__GNUC__) || defined(__clang__)) && !defined(_MSC_VER)
-	__attribute__((format(printf, 4, 5)))
+    __attribute__((format(printf, 4, 5)))
 #endif
-	;
+    ;
 
 // ── Runtime control ──────────────────────────────────────────────────────
 
@@ -71,18 +71,17 @@ bool IsEnabled(Level level);
 // ── Convenience macros ────────────────────────────────────────────────────
 #define PS5X_LOG_TAG "PS5x"
 
-#define PS5X_LOG(lvl, tag, fmt, ...)                                                                                   \
-	do                                                                                                                 \
-	{                                                                                                                  \
-		if (PS5x::Logger::IsEnabled(lvl))                                                                              \
-		{                                                                                                              \
-			PS5x::Logger::WriteF(lvl, tag, std::source_location::current(), fmt, ##__VA_ARGS__);                       \
-		}                                                                                                              \
-	} while (false)
+#define PS5X_LOG(lvl, tag, fmt, ...)                                          \
+    do {                                                                       \
+        if (PS5x::Logger::IsEnabled(lvl)) {                                   \
+            PS5x::Logger::WriteF(lvl, tag, std::source_location::current(),   \
+                                 fmt, ##__VA_ARGS__);                          \
+        }                                                                      \
+    } while (false)
 
-#define PS5X_TRACE(fmt, ...) PS5X_LOG(PS5x::Logger::Level::Trace, PS5X_LOG_TAG, fmt, ##__VA_ARGS__)
-#define PS5X_DEBUG(fmt, ...) PS5X_LOG(PS5x::Logger::Level::Debug, PS5X_LOG_TAG, fmt, ##__VA_ARGS__)
-#define PS5X_INFO(fmt, ...) PS5X_LOG(PS5x::Logger::Level::Info, PS5X_LOG_TAG, fmt, ##__VA_ARGS__)
-#define PS5X_WARN(fmt, ...) PS5X_LOG(PS5x::Logger::Level::Warning, PS5X_LOG_TAG, fmt, ##__VA_ARGS__)
-#define PS5X_ERROR(fmt, ...) PS5X_LOG(PS5x::Logger::Level::Error, PS5X_LOG_TAG, fmt, ##__VA_ARGS__)
-#define PS5X_FATAL(fmt, ...) PS5X_LOG(PS5x::Logger::Level::Fatal, PS5X_LOG_TAG, fmt, ##__VA_ARGS__)
+#define PS5X_TRACE(fmt, ...)   PS5X_LOG(PS5x::Logger::Level::Trace,   PS5X_LOG_TAG, fmt, ##__VA_ARGS__)
+#define PS5X_DEBUG(fmt, ...)   PS5X_LOG(PS5x::Logger::Level::Debug,   PS5X_LOG_TAG, fmt, ##__VA_ARGS__)
+#define PS5X_INFO(fmt, ...)    PS5X_LOG(PS5x::Logger::Level::Info,    PS5X_LOG_TAG, fmt, ##__VA_ARGS__)
+#define PS5X_WARN(fmt, ...)    PS5X_LOG(PS5x::Logger::Level::Warning, PS5X_LOG_TAG, fmt, ##__VA_ARGS__)
+#define PS5X_ERROR(fmt, ...)   PS5X_LOG(PS5x::Logger::Level::Error,   PS5X_LOG_TAG, fmt, ##__VA_ARGS__)
+#define PS5X_FATAL(fmt, ...)   PS5X_LOG(PS5x::Logger::Level::Fatal,   PS5X_LOG_TAG, fmt, ##__VA_ARGS__)

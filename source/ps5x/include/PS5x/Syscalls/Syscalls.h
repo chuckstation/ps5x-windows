@@ -19,25 +19,21 @@
 #include <string>
 #include <vector>
 
-namespace PS5x::Cpu
-{
-struct CpuContext;
-}
+namespace PS5x::Cpu { struct CpuContext; }
 
-namespace PS5x::Syscalls
-{
+namespace PS5x::Syscalls {
 
 // ── Syscall argument extraction ───────────────────────────────────────────
 /// Syscall ABI: number in RAX, args in RDI RSI RDX R10 R8 R9, result in RAX.
 struct SyscallArgs
 {
-	uint64_t number = 0;
-	uint64_t arg0 = 0; ///< RDI
-	uint64_t arg1 = 0; ///< RSI
-	uint64_t arg2 = 0; ///< RDX
-	uint64_t arg3 = 0; ///< R10
-	uint64_t arg4 = 0; ///< R8
-	uint64_t arg5 = 0; ///< R9
+    uint64_t number = 0;
+    uint64_t arg0   = 0;   ///< RDI
+    uint64_t arg1   = 0;   ///< RSI
+    uint64_t arg2   = 0;   ///< RDX
+    uint64_t arg3   = 0;   ///< R10
+    uint64_t arg4   = 0;   ///< R8
+    uint64_t arg5   = 0;   ///< R9
 };
 
 /// Extract syscall args from a CPU context.
@@ -50,47 +46,46 @@ using HandlerFn = std::function<int64_t(const SyscallArgs& args)>;
 // ── Syscall descriptor ────────────────────────────────────────────────────
 struct SyscallDesc
 {
-	uint64_t number = 0;
-	std::string name;
-	HandlerFn handler;
-	uint8_t argCount = 0; ///< for validation / logging
+    uint64_t    number  = 0;
+    std::string name;
+    HandlerFn   handler;
+    uint8_t     argCount = 0;   ///< for validation / logging
 };
 
 // ── Statistics ────────────────────────────────────────────────────────────
 struct SyscallStats
 {
-	uint64_t total = 0;
-	uint64_t known = 0;
-	uint64_t unknown = 0;
-	uint64_t errors = 0; ///< handlers returned < 0
+    uint64_t  total       = 0;
+    uint64_t  known       = 0;
+    uint64_t  unknown     = 0;
+    uint64_t  errors      = 0;  ///< handlers returned < 0
 };
 
 // ── Well-known Linux x86-64 syscall numbers (subset) ─────────────────────
-namespace Nr
-{
-inline constexpr uint64_t Read = 0;
-inline constexpr uint64_t Write = 1;
-inline constexpr uint64_t Open = 2;
-inline constexpr uint64_t Close = 3;
-inline constexpr uint64_t Stat = 4;
-inline constexpr uint64_t Fstat = 5;
-inline constexpr uint64_t Mmap = 9;
-inline constexpr uint64_t Mprotect = 10;
-inline constexpr uint64_t Munmap = 11;
-inline constexpr uint64_t Brk = 12;
-inline constexpr uint64_t Exit = 60;
-inline constexpr uint64_t ExitGrp = 231;
-inline constexpr uint64_t GetPid = 39;
-inline constexpr uint64_t GetTid = 186;
-inline constexpr uint64_t Nanosleep = 35;
-inline constexpr uint64_t ClockGettime = 228;
-inline constexpr uint64_t Sched_yield = 24;
-inline constexpr uint64_t Futex = 202;
-inline constexpr uint64_t Getrusage = 98;
-inline constexpr uint64_t Ioctl = 16;
-// PS5-custom range
-inline constexpr uint64_t Ps5Base = 0x8000;
-} // namespace Nr
+namespace Nr {
+    inline constexpr uint64_t Read    =   0;
+    inline constexpr uint64_t Write   =   1;
+    inline constexpr uint64_t Open    =   2;
+    inline constexpr uint64_t Close   =   3;
+    inline constexpr uint64_t Stat    =   4;
+    inline constexpr uint64_t Fstat   =   5;
+    inline constexpr uint64_t Mmap    =   9;
+    inline constexpr uint64_t Mprotect=  10;
+    inline constexpr uint64_t Munmap  =  11;
+    inline constexpr uint64_t Brk     =  12;
+    inline constexpr uint64_t Exit    =  60;
+    inline constexpr uint64_t ExitGrp =  231;
+    inline constexpr uint64_t GetPid   =  39;
+    inline constexpr uint64_t GetTid   = 186;
+    inline constexpr uint64_t Nanosleep=  35;
+    inline constexpr uint64_t ClockGettime = 228;
+    inline constexpr uint64_t Sched_yield  =  24;
+    inline constexpr uint64_t Futex        = 202;
+    inline constexpr uint64_t Getrusage    =  98;
+    inline constexpr uint64_t Ioctl        =  16;
+    // PS5-custom range
+    inline constexpr uint64_t Ps5Base = 0x8000;
+}
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────
 bool Init();
@@ -101,7 +96,8 @@ void RegisterBuiltins();
 
 // ── Registration ──────────────────────────────────────────────────────────
 void RegisterSyscall(const SyscallDesc& desc);
-void RegisterSyscall(uint64_t number, std::string name, HandlerFn handler, uint8_t argCount = 0);
+void RegisterSyscall(uint64_t number, std::string name,
+                     HandlerFn handler, uint8_t argCount = 0);
 
 // ── Dispatch ──────────────────────────────────────────────────────────────
 
@@ -115,20 +111,20 @@ bool ValidateArguments(const SyscallArgs& args);
 
 // ── Lookup ────────────────────────────────────────────────────────────────
 std::optional<SyscallDesc> Lookup(uint64_t number);
-const char* SyscallName(uint64_t number);
+const char*                 SyscallName(uint64_t number);
 
 // ── Statistics ────────────────────────────────────────────────────────────
 SyscallStats GetStats();
-void ResetStats();
+void         ResetStats();
 
 /// Return the last N dispatched syscall records for the monitor panel.
 struct SyscallRecord
 {
-	uint64_t number = 0;
-	std::string name;
-	SyscallArgs args;
-	int64_t result = 0;
-	uint64_t timestampUs = 0;
+    uint64_t number     = 0;
+    std::string name;
+    SyscallArgs args;
+    int64_t     result  = 0;
+    uint64_t    timestampUs = 0;
 };
 std::vector<SyscallRecord> GetRecentLog(size_t maxEntries = 256);
 

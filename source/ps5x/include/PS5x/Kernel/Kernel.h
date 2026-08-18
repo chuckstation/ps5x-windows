@@ -7,22 +7,21 @@
 #include <cstddef>
 #include <cstdint>
 
-namespace PS5x::Kernel
-{
+namespace PS5x::Kernel {
 
 // ── Virtual memory ────────────────────────────────────────────────────────
 
 enum class MapFlags : uint32_t
 {
-	Read = 1 << 0,
-	Write = 1 << 1,
-	Execute = 1 << 2,
-	Fixed = 1 << 3,
+    Read    = 1 << 0,
+    Write   = 1 << 1,
+    Execute = 1 << 2,
+    Fixed   = 1 << 3,
 };
 
-void* VirtualAlloc(void* hint, size_t size, MapFlags flags);
-bool VirtualFree(void* addr, size_t size);
-bool VirtualProtect(void* addr, size_t size, MapFlags flags);
+void*    VirtualAlloc(void* hint, size_t size, MapFlags flags);
+bool     VirtualFree(void* addr, size_t size);
+bool     VirtualProtect(void* addr, size_t size, MapFlags flags);
 
 // ── PS5 memory regions ────────────────────────────────────────────────────
 //
@@ -31,12 +30,12 @@ bool VirtualProtect(void* addr, size_t size, MapFlags flags);
 //   0x00000100_00000000 – 0x0000FFFF_FFFFFFFF  kernel / flex-heap
 //
 static constexpr uint64_t APP_BASE_ADDR = 0x00000001'00000000ULL;
-static constexpr uint64_t APP_MAX_ADDR = 0x000000FF'FFFFFFFFULL;
+static constexpr uint64_t APP_MAX_ADDR  = 0x000000FF'FFFFFFFFULL;
 
 // ── Flex-heap ─────────────────────────────────────────────────────────────
 
-void* FlexHeapAlloc(size_t size, size_t align = 16);
-void FlexHeapFree(void* ptr);
+void*    FlexHeapAlloc(size_t size, size_t align = 16);
+void     FlexHeapFree(void* ptr);
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────
 

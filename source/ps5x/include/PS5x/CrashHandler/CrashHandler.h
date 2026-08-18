@@ -5,20 +5,18 @@
 #include <cstdint>
 #include <string>
 
-namespace PS5x::CrashHandler
-{
+namespace PS5x::CrashHandler {
 
-struct CrashInfo
-{
-	uint32_t exceptionCode = 0;
-	uint64_t faultAddr = 0;
-	uint64_t rip = 0;
-	uint64_t rsp = 0;
-	std::string module;
-	std::string message;
+struct CrashInfo {
+    uint32_t    exceptionCode = 0;
+    uint64_t    faultAddr     = 0;
+    uint64_t    rip           = 0;
+    uint64_t    rsp           = 0;
+    std::string module;
+    std::string message;
 };
 
-using CrashCallback = void (*)(const CrashInfo& info);
+using CrashCallback = void(*)(const CrashInfo& info);
 
 // Install platform-specific crash handler (SEH on Windows, signal on Linux)
 bool Install(const std::string& dumpDir = "");

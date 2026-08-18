@@ -10,8 +10,8 @@
 //   • Exit handling and resource cleanup
 #pragma once
 
-#include "PS5x/KernelRuntime/KernelRuntime.h"
 #include "PS5x/Loader/Loader.h"
+#include "PS5x/KernelRuntime/KernelRuntime.h"
 
 #include <cstdint>
 #include <filesystem>
@@ -19,19 +19,18 @@
 #include <string>
 #include <vector>
 
-namespace PS5x::Process
-{
+namespace PS5x::Process {
 
 // ── Process state ─────────────────────────────────────────────────────────
 enum class ProcessState : uint8_t
 {
-	None = 0,
-	Created = 1,
-	Loading = 2,
-	Running = 3,
-	Exiting = 4,
-	Terminated = 5,
-	Faulted = 6,
+    None       = 0,
+    Created    = 1,
+    Loading    = 2,
+    Running    = 3,
+    Exiting    = 4,
+    Terminated = 5,
+    Faulted    = 6,
 };
 
 const char* ProcessStateName(ProcessState s);
@@ -39,24 +38,24 @@ const char* ProcessStateName(ProcessState s);
 // ── Module record ─────────────────────────────────────────────────────────
 struct Module
 {
-	std::string name;
-	std::filesystem::path path;
-	PS5x::Loader::ExecutableInfo elfInfo;
-	bool isMain = false;
+    std::string                  name;
+    std::filesystem::path        path;
+    PS5x::Loader::ExecutableInfo elfInfo;
+    bool                         isMain = false;
 };
 
 // ── Process descriptor ────────────────────────────────────────────────────
 struct ProcessInfo
 {
-	uint32_t pid = 0;
-	std::string titleId;
-	std::string appVersion;
-	ProcessState state = ProcessState::None;
-	KernelRuntime::KHandle mainThread = KernelRuntime::INVALID_HANDLE;
-	std::vector<Module> modules;
-	int exitCode = 0;
-	uint64_t startTimeUs = 0;
-	uint64_t exitTimeUs = 0;
+    uint32_t                     pid         = 0;
+    std::string                  titleId;
+    std::string                  appVersion;
+    ProcessState                 state       = ProcessState::None;
+    KernelRuntime::KHandle       mainThread  = KernelRuntime::INVALID_HANDLE;
+    std::vector<Module>          modules;
+    int                          exitCode    = 0;
+    uint64_t                     startTimeUs = 0;
+    uint64_t                     exitTimeUs  = 0;
 };
 
 // ── Exit callback ─────────────────────────────────────────────────────────
@@ -74,8 +73,9 @@ void Shutdown();
 /// @param contentPath Guest /app0/ host directory.
 /// @param firmwarePath User-supplied firmware directory (not bundled).
 /// @returns PID on success, 0 on failure.
-uint32_t Create(const std::filesystem::path& elfPath, const std::filesystem::path& contentPath,
-				const std::filesystem::path& firmwarePath);
+uint32_t Create(const std::filesystem::path& elfPath,
+                const std::filesystem::path& contentPath,
+                const std::filesystem::path& firmwarePath);
 
 /// Start the main thread of the created process.
 bool Start(uint32_t pid);
@@ -84,7 +84,8 @@ bool Start(uint32_t pid);
 bool RequestExit(uint32_t pid, int exitCode = 0);
 
 /// Wait for process to terminate.
-bool Wait(uint32_t pid, int* exitCode = nullptr, uint64_t timeoutUs = UINT64_MAX);
+bool Wait(uint32_t pid, int* exitCode = nullptr,
+          uint64_t timeoutUs = UINT64_MAX);
 
 /// Forcibly terminate a process and clean up all resources.
 void Terminate(uint32_t pid);
@@ -98,10 +99,10 @@ bool LoadModule(uint32_t pid, const std::filesystem::path& path);
 std::vector<Module> GetModules(uint32_t pid);
 
 // ── Queries ───────────────────────────────────────────────────────────────
-ProcessInfo GetInfo(uint32_t pid);
-ProcessState GetState(uint32_t pid);
-bool IsRunning(uint32_t pid);
-uint32_t GetCurrentPid(); ///< 0 if no process running
+ProcessInfo     GetInfo(uint32_t pid);
+ProcessState    GetState(uint32_t pid);
+bool            IsRunning(uint32_t pid);
+uint32_t        GetCurrentPid();   ///< 0 if no process running
 
 // ── Callbacks ─────────────────────────────────────────────────────────────
 void RegisterExitCallback(ExitCallbackFn fn);
