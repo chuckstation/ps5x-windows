@@ -5,12 +5,8 @@
 // When CHUCKSTATION5_ENABLE_UI_WINDOW is defined, Dear ImGui (Win32 + DX12 backend)
 // is layered on top. Without it the pump runs headless for tests and CI.
 // SaveWorkspace/LoadWorkspace use a simple INI format.
-#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef NOMINMAX
 #define NOMINMAX
-#endif
 #include "ChuckStation5/UI/UI.h"
 #include "ChuckStation5/Config/Config.h"
 #include "ChuckStation5/Cpu/Cpu.h"

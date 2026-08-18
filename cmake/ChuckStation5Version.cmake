@@ -1,27 +1,36 @@
-# Automatically generate ChuckStation5Version.h from template
-set(CHUCKSTATION5_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
-set(CHUCKSTATION5_VERSION_MINOR ${PROJECT_VERSION_MINOR})
-set(CHUCKSTATION5_VERSION_PATCH ${PROJECT_VERSION_PATCH})
-set(CHUCKSTATION5_VERSION_STRING "${PROJECT_VERSION}")
+# cmake/ChuckStation5Version.cmake
+# Embeds git commit hash + project version into a generated header
 
-# Try to get git commit hash
+include_guard(GLOBAL)
+
 find_package(Git QUIET)
-if(GIT_FOUND AND EXISTS "${CMAKE_SOURCE_DIR}/.git")
-  execute_process(
-    COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
-    WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
-    OUTPUT_VARIABLE CHUCKSTATION5_GIT_HASH
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-    ERROR_QUIET)
-else()
-  set(CHUCKSTATION5_GIT_HASH "unknown")
+
+if(Git_FOUND)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} rev-parse --short HEAD
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        OUTPUT_VARIABLE CHUCKSTATION5_GIT_HASH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=0
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+        OUTPUT_VARIABLE CHUCKSTATION5_GIT_TAG
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+        ERROR_QUIET
+    )
 endif()
 
 if(NOT CHUCKSTATION5_GIT_HASH)
-  set(CHUCKSTATION5_GIT_HASH "unknown")
+    set(CHUCKSTATION5_GIT_HASH "unknown")
+endif()
+if(NOT CHUCKSTATION5_GIT_TAG)
+    set(CHUCKSTATION5_GIT_TAG "v${PROJECT_VERSION}")
 endif()
 
 configure_file(
-  "${CMAKE_SOURCE_DIR}/cmake/ChuckStation5Version.h.in"
-  "${CMAKE_BINARY_DIR}/generated/ChuckStation5/Version.h"
-  @ONLY)
+    "${CMAKE_SOURCE_DIR}/cmake/ChuckStation5Version.h.in"
+    "${CMAKE_BINARY_DIR}/generated/ChuckStation5/Version.h"
+    @ONLY
+)

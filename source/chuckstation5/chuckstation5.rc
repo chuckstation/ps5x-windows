@@ -1,4 +1,4 @@
-// PS5x Windows resource file
+// ChuckStation5 Windows resource file
 // SPDX-License-Identifier: MIT
 #include <windows.h>
 
@@ -37,10 +37,10 @@ BEGIN
             VALUE "CompanyName",      "Libaerto "
             VALUE "FileDescription",  "PlayStation 5 emulator for Windows"
             VALUE "FileVersion",      "1.0.0.0"
-            VALUE "InternalName",     "ps5x"
+            VALUE "InternalName",     "chuckstation5"
             VALUE "LegalCopyright",   "MIT (c) 2026 Libaerto Contributors; based on Kyty (c) 2021 InoriRus"
-            VALUE "OriginalFilename", "ps5x.exe"
-            VALUE "ProductName",      "PS5x"
+            VALUE "OriginalFilename", "chuckstation5.exe"
+            VALUE "ProductName",      "ChuckStation5"
             VALUE "ProductVersion",   "1.0.0.0"
         END
     END

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-# ─── ChuckStation 5 modules ───────────────────────────────────────────────────
+# ─── ChuckStation5 modules ────────────────────────────────────────────────────────────
 set(CHUCKSTATION5_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include")
 set(CHUCKSTATION5_GEN_DIR "${CMAKE_BINARY_DIR}/generated")
 
@@ -37,7 +37,7 @@ macro(chuckstation5_module NAME)
   add_library(chuckstation5_${NAME} STATIC ${SRCS})
 
   target_include_directories(chuckstation5_${NAME} PUBLIC "${CHUCKSTATION5_INCLUDE_DIR}"
-                                                          "${CHUCKSTATION5_GEN_DIR}")
+                                                 "${CHUCKSTATION5_GEN_DIR}")
   target_compile_features(chuckstation5_${NAME} PUBLIC cxx_std_20)
   chuckstation5_target_compile_options(chuckstation5_${NAME})
 
@@ -78,7 +78,7 @@ target_link_libraries(chuckstation5_config PUBLIC chuckstation5_logger)
 chuckstation5_module(memory src/Memory/Memory.cpp)
 target_link_libraries(chuckstation5_memory PUBLIC chuckstation5_logger)
 
-# ── Kernel ────────────────────────────────────────────────────────────────
+# ── Kernel (legacy stubs – kept for compatibility) ────────────────────────
 chuckstation5_module(kernel src/Kernel/Kernel.cpp)
 target_link_libraries(chuckstation5_kernel PUBLIC chuckstation5_logger chuckstation5_memory)
 
@@ -113,7 +113,7 @@ target_link_libraries(chuckstation5_debugger PUBLIC chuckstation5_logger chuckst
 # ── UI ───────────────────────────────────────────────────────────────────
 chuckstation5_module(ui src/UI/UI.cpp)
 target_link_libraries(chuckstation5_ui PUBLIC chuckstation5_logger chuckstation5_config chuckstation5_perf_tools
-                                              chuckstation5_cpu)
+                                     chuckstation5_cpu)
 
 # ── KytyAdapter ──────────────────────────────────────────────────────────
 chuckstation5_module(kyty_adapter src/KytyAdapter/KytyAdapter.cpp)
@@ -205,6 +205,8 @@ target_link_libraries(
          chuckstation5_syscalls
          chuckstation5_cpu)
 
+# ── Phase 4 modules ───────────────────────────────────────────────────────
+
 # Execution framework
 chuckstation5_module(execution src/Execution/Execution.cpp)
 target_link_libraries(
@@ -225,11 +227,13 @@ target_link_libraries(chuckstation5_module_registry PUBLIC chuckstation5_logger 
 # Kernel services
 chuckstation5_module(kernel_services src/KernelServices/KernelServices.cpp)
 target_link_libraries(chuckstation5_kernel_services PUBLIC chuckstation5_logger chuckstation5_memory
-                                                          chuckstation5_kernel_runtime)
+                                                  chuckstation5_kernel_runtime)
 
 # Memory diagnostics
 chuckstation5_module(memory_diag src/MemoryDiag/MemoryDiag.cpp)
 target_link_libraries(chuckstation5_memory_diag PUBLIC chuckstation5_logger chuckstation5_memory)
+
+# ── Phase 5 modules ───────────────────────────────────────────────────────
 
 # Runtime Events
 chuckstation5_module(runtime_events src/RuntimeEvents/RuntimeEvents.cpp)
@@ -239,7 +243,7 @@ target_link_libraries(chuckstation5_runtime_events PUBLIC chuckstation5_logger)
 chuckstation5_module(dynamic_linker src/DynamicLinker/DynamicLinker.cpp)
 target_link_libraries(
   chuckstation5_dynamic_linker PUBLIC chuckstation5_logger chuckstation5_memory chuckstation5_module_registry
-                                     chuckstation5_runtime_events)
+                             chuckstation5_runtime_events)
 
 # Shader Cache
 chuckstation5_module(shader_cache src/ShaderCache/ShaderCache.cpp)
@@ -247,20 +251,23 @@ target_link_libraries(chuckstation5_shader_cache PUBLIC chuckstation5_logger chu
 
 # Performance Tools
 chuckstation5_module(perf_tools src/PerfTools/PerfTools.cpp)
+# ── Phase 7 modules ───────────────────────────────────────────────────────
 chuckstation5_module(cpu src/Cpu/Cpu.cpp)
 target_link_libraries(chuckstation5_cpu PUBLIC chuckstation5_logger chuckstation5_memory
-                                              chuckstation5_runtime_events)
+                                      chuckstation5_runtime_events)
 
 chuckstation5_module(syscalls src/Syscalls/Syscalls.cpp)
 target_link_libraries(chuckstation5_syscalls PUBLIC chuckstation5_logger chuckstation5_runtime_events
-                                                   chuckstation5_cpu)
+                                           chuckstation5_cpu)
 
 chuckstation5_module(command_processor src/CommandProcessor/CommandProcessor.cpp)
 target_link_libraries(
   chuckstation5_command_processor PUBLIC chuckstation5_logger chuckstation5_renderer chuckstation5_gpu
-                                        chuckstation5_runtime_events)
+                                chuckstation5_runtime_events)
 
 target_link_libraries(chuckstation5_perf_tools PUBLIC chuckstation5_logger)
+
+# ── Phase 9: Production modules ────────────────────────────────────────────
 
 # Crash Handler
 if(CHUCKSTATION5_ENABLE_CRASH_HANDLER)
@@ -281,7 +288,7 @@ endif()
 if(CHUCKSTATION5_ENABLE_SAVESTATES)
   chuckstation5_module(save_state src/SaveState/SaveState.cpp)
   target_link_libraries(chuckstation5_save_state PUBLIC chuckstation5_logger chuckstation5_memory chuckstation5_cpu
-                                                       chuckstation5_gpu)
+                                               chuckstation5_gpu)
 endif()
 
 # Input Mapping

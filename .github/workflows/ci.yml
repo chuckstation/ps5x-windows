@@ -1,4 +1,4 @@
-name: ChuckStation 5 CI (Windows)
+name: ChuckStation5 CI (Windows)
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-release:
-    name: Build ChuckStation 5 Release (Windows x64)
+    name: Build ChuckStation5 Release (Windows x64)
     runs-on: windows-2022
 
     steps:

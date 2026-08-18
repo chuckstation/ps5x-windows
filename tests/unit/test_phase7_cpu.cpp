@@ -1,4 +1,4 @@
-// ChuckStation5 – CPU Interpreter tests
+// ChuckStation5 – Phase 7 CPU Interpreter tests
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
 #include "ChuckStation5/Cpu/Cpu.h"
@@ -7,21 +7,31 @@ using namespace ChuckStation5::Cpu;
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
+/// Write bytes into a small aligned buffer and return pointer.
+/// Used to build micro-programs for the interpreter tests.
 static std::vector<uint8_t> Encode(std::initializer_list<uint8_t> bytes)
 {
     return std::vector<uint8_t>(bytes);
 }
 
+static void LoadAndStep(const std::vector<uint8_t>& code, int steps = 1)
+{
+    auto& ctx = GetContext();
+    // Point RIP at our code buffer (host address = guest address for tests)
+    ctx.rip = reinterpret_cast<uint64_t>(code.data());
+    for (int i = 0; i < steps; ++i) Step();
+}
+
 // ── Lifecycle ─────────────────────────────────────────────────────────────
 
-TEST_CASE("Cpu::Lifecycle::InitShutdown", "[cpu]")
+TEST_CASE("Phase7::Cpu::Lifecycle::InitShutdown", "[cpu][phase7]")
 {
     CHECK(Init());
     CHECK(GetContext().rip == 0);
     Shutdown();
 }
 
-TEST_CASE("Cpu::Lifecycle::Reset", "[cpu]")
+TEST_CASE("Phase7::Cpu::Lifecycle::Reset", "[cpu][phase7]")
 {
     Init();
     SetRip(0xDEAD);
@@ -30,7 +40,7 @@ TEST_CASE("Cpu::Lifecycle::Reset", "[cpu]")
     Shutdown();
 }
 
-TEST_CASE("Cpu::Lifecycle::SetRip", "[cpu]")
+TEST_CASE("Phase7::Cpu::Lifecycle::SetRip", "[cpu][phase7]")
 {
     Init();
     SetRip(0x1234'5678ULL);
@@ -38,7 +48,7 @@ TEST_CASE("Cpu::Lifecycle::SetRip", "[cpu]")
     Shutdown();
 }
 
-TEST_CASE("Cpu::Lifecycle::SetRsp", "[cpu]")
+TEST_CASE("Phase7::Cpu::Lifecycle::SetRsp", "[cpu][phase7]")
 {
     Init();
     SetRsp(0x7FFF'0000ULL);
@@ -48,7 +58,7 @@ TEST_CASE("Cpu::Lifecycle::SetRsp", "[cpu]")
 
 // ── Register names ─────────────────────────────────────────────────────────
 
-TEST_CASE("Cpu::RegNames::AllNames", "[cpu]")
+TEST_CASE("Phase7::Cpu::RegNames::AllNames", "[cpu][phase7]")
 {
     CHECK(std::string(RegName(Reg::RAX)) == "rax");
     CHECK(std::string(RegName(Reg::RBX)) == "rbx");
@@ -64,7 +74,7 @@ TEST_CASE("Cpu::RegNames::AllNames", "[cpu]")
 
 // ── StepResultName ─────────────────────────────────────────────────────────
 
-TEST_CASE("Cpu::StepResultName::AllValues", "[cpu]")
+TEST_CASE("Phase7::Cpu::StepResultName::AllValues", "[cpu][phase7]")
 {
     CHECK(std::string(StepResultName(StepResult::Ok))            == "Ok");
     CHECK(std::string(StepResultName(StepResult::Breakpoint))    == "Breakpoint");
@@ -77,7 +87,7 @@ TEST_CASE("Cpu::StepResultName::AllValues", "[cpu]")
 
 // ── NOP instruction ────────────────────────────────────────────────────────
 
-TEST_CASE("Cpu::Insn::NOP", "[cpu]")
+TEST_CASE("Phase7::Cpu::Insn::NOP", "[cpu][phase7]")
 {
     Init();
     auto code = Encode({0x90});  // NOP
@@ -91,7 +101,7 @@ TEST_CASE("Cpu::Insn::NOP", "[cpu]")
 
 // ── HLT instruction ────────────────────────────────────────────────────────
 
-TEST_CASE("Cpu::Insn::HLT", "[cpu]")
+TEST_CASE("Phase7::Cpu::Insn::HLT", "[cpu][phase7]")
 {
     Init();
     auto code = Encode({0xF4});  // HLT
@@ -103,7 +113,7 @@ TEST_CASE("Cpu::Insn::HLT", "[cpu]")
 
 // ── SYSCALL instruction ────────────────────────────────────────────────────
 
-TEST_CASE("Cpu::Insn::SYSCALL", "[cpu]")
+TEST_CASE("Phase7::Cpu::Insn::SYSCALL", "[cpu][phase7]")
 {
     Init();
     auto code = Encode({0x0F, 0x05});  // SYSCALL
@@ -115,7 +125,7 @@ TEST_CASE("Cpu::Insn::SYSCALL", "[cpu]")
 
 // ── INT 3 breakpoint ───────────────────────────────────────────────────────
 
-TEST_CASE("Cpu::Insn::INT3", "[cpu]")
+TEST_CASE("Phase7::Cpu::Insn::INT3", "[cpu][phase7]")
 {
     Init();
     auto code = Encode({0xCD, 0x03});  // INT 3
@@ -127,10 +137,11 @@ TEST_CASE("Cpu::Insn::INT3", "[cpu]")
 
 // ── XOR reg, reg (self-zero) ───────────────────────────────────────────────
 
-TEST_CASE("Cpu::Insn::XOR_RegReg", "[cpu]")
+TEST_CASE("Phase7::Cpu::Insn::XOR_RegReg", "[cpu][phase7]")
 {
     Init();
     GetContext().gpr_set(Reg::RAX, 0xDEADBEEF);
+    // REX.W + XOR rax, rax = 48 33 C0
     auto code = Encode({0x48, 0x33, 0xC0});
     GetContext().rip = reinterpret_cast<uint64_t>(code.data());
     auto r = Step();
@@ -142,23 +153,26 @@ TEST_CASE("Cpu::Insn::XOR_RegReg", "[cpu]")
 
 // ── JMP short ─────────────────────────────────────────────────────────────
 
-TEST_CASE("Cpu::Insn::JMP_Short", "[cpu]")
+TEST_CASE("Phase7::Cpu::Insn::JMP_Short", "[cpu][phase7]")
 {
     Init();
+    // EB 02 = JMP +2 (skip 2 bytes past end of insn)
     auto code = Encode({0xEB, 0x02, 0x90, 0x90, 0xF4});
     uint64_t base = reinterpret_cast<uint64_t>(code.data());
     GetContext().rip = base;
     auto r = Step();
     CHECK(r == StepResult::Ok);
+    // RIP should be base + 2 (insn len) + 2 (rel8) = base + 4
     CHECK(GetContext().rip == base + 4);
     Shutdown();
 }
 
 // ── JE / JNE ──────────────────────────────────────────────────────────────
 
-TEST_CASE("Cpu::Insn::JE_Taken", "[cpu]")
+TEST_CASE("Phase7::Cpu::Insn::JE_Taken", "[cpu][phase7]")
 {
     Init();
+    // 74 02 = JE +2  (taken when ZF=1)
     auto code = Encode({0x74, 0x02, 0x90, 0x90, 0xF4});
     uint64_t base = reinterpret_cast<uint64_t>(code.data());
     GetContext().rip = base;
@@ -168,7 +182,7 @@ TEST_CASE("Cpu::Insn::JE_Taken", "[cpu]")
     Shutdown();
 }
 
-TEST_CASE("Cpu::Insn::JE_NotTaken", "[cpu]")
+TEST_CASE("Phase7::Cpu::Insn::JE_NotTaken", "[cpu][phase7]")
 {
     Init();
     auto code = Encode({0x74, 0x02, 0x90, 0x90, 0xF4});
@@ -182,7 +196,7 @@ TEST_CASE("Cpu::Insn::JE_NotTaken", "[cpu]")
 
 // ── Breakpoints ────────────────────────────────────────────────────────────
 
-TEST_CASE("Cpu::Breakpoints::AddRemove", "[cpu]")
+TEST_CASE("Phase7::Cpu::Breakpoints::AddRemove", "[cpu][phase7]")
 {
     Init();
     uint32_t id = AddBreakpoint(0xABCD, "test");
@@ -193,7 +207,7 @@ TEST_CASE("Cpu::Breakpoints::AddRemove", "[cpu]")
     Shutdown();
 }
 
-TEST_CASE("Cpu::Breakpoints::Clear", "[cpu]")
+TEST_CASE("Phase7::Cpu::Breakpoints::Clear", "[cpu][phase7]")
 {
     Init();
     AddBreakpoint(0x1000, "a");
@@ -204,7 +218,7 @@ TEST_CASE("Cpu::Breakpoints::Clear", "[cpu]")
     Shutdown();
 }
 
-TEST_CASE("Cpu::Breakpoints::HitOnStep", "[cpu]")
+TEST_CASE("Phase7::Cpu::Breakpoints::HitOnStep", "[cpu][phase7]")
 {
     Init();
     auto code = Encode({0x90, 0x90, 0xF4});
@@ -217,7 +231,7 @@ TEST_CASE("Cpu::Breakpoints::HitOnStep", "[cpu]")
     Shutdown();
 }
 
-TEST_CASE("Cpu::Breakpoints::RemoveInvalid", "[cpu]")
+TEST_CASE("Phase7::Cpu::Breakpoints::RemoveInvalid", "[cpu][phase7]")
 {
     Init();
     CHECK_FALSE(RemoveBreakpoint(99999));
@@ -226,7 +240,7 @@ TEST_CASE("Cpu::Breakpoints::RemoveInvalid", "[cpu]")
 
 // ── Statistics ─────────────────────────────────────────────────────────────
 
-TEST_CASE("Cpu::Stats::Reset", "[cpu]")
+TEST_CASE("Phase7::Cpu::Stats::Reset", "[cpu][phase7]")
 {
     Init();
     auto code = Encode({0x90});
@@ -237,7 +251,7 @@ TEST_CASE("Cpu::Stats::Reset", "[cpu]")
     Shutdown();
 }
 
-TEST_CASE("Cpu::Stats::IncrementOnStep", "[cpu]")
+TEST_CASE("Phase7::Cpu::Stats::IncrementOnStep", "[cpu][phase7]")
 {
     Init();
     auto code = Encode({0x90, 0x90, 0x90});
@@ -250,7 +264,7 @@ TEST_CASE("Cpu::Stats::IncrementOnStep", "[cpu]")
 
 // ── Decode / Disassemble ───────────────────────────────────────────────────
 
-TEST_CASE("Cpu::Decode::NOP", "[cpu]")
+TEST_CASE("Phase7::Cpu::Decode::NOP", "[cpu][phase7]")
 {
     Init();
     uint8_t buf[] = {0x90};
@@ -261,7 +275,7 @@ TEST_CASE("Cpu::Decode::NOP", "[cpu]")
     Shutdown();
 }
 
-TEST_CASE("Cpu::Decode::NullReturnsNullopt", "[cpu]")
+TEST_CASE("Phase7::Cpu::Decode::NullReturnsNullopt", "[cpu][phase7]")
 {
     Init();
     auto d = Decode(nullptr, 0);
@@ -269,9 +283,10 @@ TEST_CASE("Cpu::Decode::NullReturnsNullopt", "[cpu]")
     Shutdown();
 }
 
-TEST_CASE("Cpu::Disassemble::ReturnsCount", "[cpu]")
+TEST_CASE("Phase7::Cpu::Disassemble::ReturnsCount", "[cpu][phase7]")
 {
     Init();
+    // Three NOPs
     auto code = Encode({0x90, 0x90, 0x90});
     auto dis = Disassemble(reinterpret_cast<uint64_t>(code.data()), 3);
     CHECK(dis.size() == 3);
@@ -281,7 +296,7 @@ TEST_CASE("Cpu::Disassemble::ReturnsCount", "[cpu]")
 
 // ── SetContext / GetContext ────────────────────────────────────────────────
 
-TEST_CASE("Cpu::Context::SetAndGet", "[cpu]")
+TEST_CASE("Phase7::Cpu::Context::SetAndGet", "[cpu][phase7]")
 {
     Init();
     CpuContext ctx;
@@ -299,7 +314,7 @@ TEST_CASE("Cpu::Context::SetAndGet", "[cpu]")
 
 // ── Instruction callback ───────────────────────────────────────────────────
 
-TEST_CASE("Cpu::Callback::InsnFired", "[cpu]")
+TEST_CASE("Phase7::Cpu::Callback::InsnFired", "[cpu][phase7]")
 {
     Init();
     int fired = 0;
@@ -315,14 +330,14 @@ TEST_CASE("Cpu::Callback::InsnFired", "[cpu]")
 
 // ── Call stack ─────────────────────────────────────────────────────────────
 
-TEST_CASE("Cpu::CallStack::EmptyOnInit", "[cpu]")
+TEST_CASE("Phase7::Cpu::CallStack::EmptyOnInit", "[cpu][phase7]")
 {
     Init();
     CHECK(GetCallStack().empty());
     Shutdown();
 }
 
-TEST_CASE("Cpu::CallStack::MaxDepthRespected", "[cpu]")
+TEST_CASE("Phase7::Cpu::CallStack::MaxDepthRespected", "[cpu][phase7]")
 {
     Init();
     auto cs = GetCallStack(0);

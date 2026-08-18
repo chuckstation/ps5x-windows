@@ -1,14 +1,20 @@
 cmake_minimum_required(VERSION 3.22)
 
-# ─── ChuckStation 5 ─────────────────────────────────────────────────────────
-# Experimental PlayStation 5 emulator framework on top of the Kyty project base.
+# ─── ChuckStation5 ────────────────────────────────────────────────────────────────────
+# Research-oriented PlayStation 5 emulator framework for Windows Built on top of
+# the Kyty project (MIT, Copyright © 2021 InoriRus) ChuckStation5 additions: MIT,
+# Copyright © 2024-2026 libaerto Contributors
+#
+# Repository: https://github.com/libaerto/chuckstation5-windows Kyty upstream is included
+# as a reference / component on Windows only. ChuckStation5 modules are cross-platform
+# C++20 and compile on any host.
 # ─────────────────────────────────────────────────────────────────────────────
 
 project(
   ChuckStation5
   VERSION 1.0.0
   DESCRIPTION
-    "ChuckStation 5 PS5 emulator framework"
+    "Production-ready PS5 emulator framework for Windows (libaerto/chuckstation5-windows)"
   LANGUAGES C CXX)
 
 # ── C++ standard ─────────────────────────────────────────────────────────────
@@ -70,7 +76,7 @@ if(CHUCKSTATION5_CLANG_TIDY)
   endif()
 endif()
 
-# ── ChuckStation5 modules ─────────────────────────────────────────────────────
+# ── ChuckStation5 modules ─────────────────────────────────────────────────────────────
 add_subdirectory(source/chuckstation5)
 
 # ── Tests ─────────────────────────────────────────────────────────────────────
@@ -81,8 +87,8 @@ endif()
 
 # ── Packaging (CPack) ────────────────────────────────────────────────────────
 set(CPACK_PACKAGE_NAME "ChuckStation5")
-set(CPACK_PACKAGE_VENDOR "ChuckStation5")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "ChuckStation 5 PS5 emulator framework")
+set(CPACK_PACKAGE_VENDOR "libaerto")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "PS5 emulator framework for Windows")
 set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
 set(CPACK_PACKAGE_INSTALL_DIRECTORY "ChuckStation5")
 set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/LICENSE")
@@ -91,7 +97,7 @@ set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README.md")
 if(WIN32)
   set(CPACK_GENERATOR "ZIP;NSIS")
   set(CPACK_NSIS_PACKAGE_NAME "ChuckStation5 v${PROJECT_VERSION}")
-  set(CPACK_NSIS_DISPLAY_NAME "ChuckStation 5 PS5 Emulator")
+  set(CPACK_NSIS_DISPLAY_NAME "ChuckStation5 - PS5 Emulator Framework")
   set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/resources/chuckstation5.ico")
 else()
   set(CPACK_GENERATOR "TGZ")

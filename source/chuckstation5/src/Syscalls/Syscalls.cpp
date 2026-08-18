@@ -4,12 +4,8 @@
 // Windows-only: memory syscalls (mmap/brk/munmap) are implemented via
 // Win32 VirtualAlloc / VirtualFree instead of POSIX mmap.
 // All Linux ABI syscall numbers are preserved for guest compatibility.
-#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
-#endif
-#ifndef NOMINMAX
 #define NOMINMAX
-#endif
 #include "ChuckStation5/Syscalls/Syscalls.h"
 
 #include "ChuckStation5/Cpu/Cpu.h"

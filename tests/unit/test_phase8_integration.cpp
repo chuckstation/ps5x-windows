@@ -1,4 +1,4 @@
-// ChuckStation5 – Integration tests
+// ChuckStation5 – Phase 8 Integration tests
 // SPDX-License-Identifier: MIT
 // End-to-end subsystem integration: CPU+Syscall+Memory+GPU+Debugger+Events.
 #include <catch2/catch_test_macros.hpp>
@@ -20,7 +20,7 @@ using namespace ChuckStation5::CommandProcessor;
 
 // ── Full subsystem init/shutdown ──────────────────────────────────────────
 
-TEST_CASE("Integration::FullInit::AllSubsystems", "[integration]")
+TEST_CASE("Phase8::Integration::FullInit::AllSubsystems", "[integration][phase8]")
 {
     CHECK(Memory::Init());
     CHECK(Cpu::Init());
@@ -53,7 +53,7 @@ TEST_CASE("Integration::FullInit::AllSubsystems", "[integration]")
 
 // ── CPU → Debugger integration ────────────────────────────────────────────
 
-TEST_CASE("Integration::CPU_Debugger::BreakpointHitTracked", "[integration]")
+TEST_CASE("Phase8::Integration::CPU_Debugger::BreakpointHitTracked", "[integration][phase8]")
 {
     Cpu::Init();
     Debugger::Init();
@@ -78,7 +78,7 @@ TEST_CASE("Integration::CPU_Debugger::BreakpointHitTracked", "[integration]")
     Cpu::Shutdown();
 }
 
-TEST_CASE("Integration::CPU_Debugger::RegisterViewAfterExec", "[integration]")
+TEST_CASE("Phase8::Integration::CPU_Debugger::RegisterViewAfterExec", "[integration][phase8]")
 {
     Cpu::Init();
     Debugger::Init();
@@ -101,7 +101,7 @@ TEST_CASE("Integration::CPU_Debugger::RegisterViewAfterExec", "[integration]")
 
 // ── CPU → Syscall → Memory integration ───────────────────────────────────
 
-TEST_CASE("Integration::CPU_Syscall_Memory::GetPidAndBrk", "[integration]")
+TEST_CASE("Phase8::Integration::CPU_Syscall_Memory::GetPidAndBrk", "[integration][phase8]")
 {
     Memory::Init();
     Cpu::Init();
@@ -119,8 +119,7 @@ TEST_CASE("Integration::CPU_Syscall_Memory::GetPidAndBrk", "[integration]")
     ctx.gpr_set(Cpu::Reg::RAX, Syscalls::Nr::Brk);
     ctx.gpr_set(Cpu::Reg::RDI, 0);
     Syscalls::Dispatch(ctx);
-    (void)ctx.gpr_get(Cpu::Reg::RAX);
-    CHECK(true);
+    CHECK(ctx.gpr_get(Cpu::Reg::RAX) >= 0);
 
     Syscalls::Shutdown();
     Cpu::Shutdown();
@@ -129,7 +128,7 @@ TEST_CASE("Integration::CPU_Syscall_Memory::GetPidAndBrk", "[integration]")
 
 // ── GPU → CommandProcessor → RuntimeEvents integration ────────────────────
 
-TEST_CASE("Integration::GPU_Events::FrameEndPublished", "[integration]")
+TEST_CASE("Phase8::Integration::GPU_Events::FrameEndPublished", "[integration][phase8]")
 {
     RuntimeEvents::Init();
     GPU::Init(nullptr);
@@ -159,7 +158,7 @@ TEST_CASE("Integration::GPU_Events::FrameEndPublished", "[integration]")
 
 // ── PerfTools → CPU → GPU pipeline ───────────────────────────────────────
 
-TEST_CASE("Integration::PerfTools_CPU_GPU::FullFrame", "[integration]")
+TEST_CASE("Phase8::Integration::PerfTools_CPU_GPU::FullFrame", "[integration][phase8]")
 {
     PerfTools::Init();
     Cpu::Init();
@@ -210,7 +209,7 @@ TEST_CASE("Integration::PerfTools_CPU_GPU::FullFrame", "[integration]")
 
 // ── Multi-phase ALU sequence ──────────────────────────────────────────────
 
-TEST_CASE("Integration::CPU::ALUSequence", "[integration]")
+TEST_CASE("Phase8::Integration::CPU::ALUSequence", "[integration][phase8]")
 {
     // Program:
     //   mov rax, 10   (48 C7 C0 0A 00 00 00)
@@ -238,7 +237,7 @@ TEST_CASE("Integration::CPU::ALUSequence", "[integration]")
     Cpu::Shutdown();
 }
 
-TEST_CASE("Integration::CPU::ShiftAndCompare", "[integration]")
+TEST_CASE("Phase8::Integration::CPU::ShiftAndCompare", "[integration][phase8]")
 {
     // shl rax, 3 then cmp rax, rbx then je/jne
     // mov rax, 1  (48 C7 C0 01 00 00 00)
@@ -267,7 +266,7 @@ TEST_CASE("Integration::CPU::ShiftAndCompare", "[integration]")
     Cpu::Shutdown();
 }
 
-TEST_CASE("Integration::CPU::MovzxPipeline", "[integration]")
+TEST_CASE("Phase8::Integration::CPU::MovzxPipeline", "[integration][phase8]")
 {
     // mov rcx, 0xAB  then movzx rax, cl  → rax = 0xAB (byte zero-extended)
     alignas(16) uint8_t code[] = {
@@ -289,7 +288,7 @@ TEST_CASE("Integration::CPU::MovzxPipeline", "[integration]")
 
 // ── Homebrew demo: write + exit ───────────────────────────────────────────
 
-TEST_CASE("Integration::Homebrew::WriteAndExit", "[integration]")
+TEST_CASE("Phase8::Integration::Homebrew::WriteAndExit", "[integration][phase8]")
 {
     Cpu::Init();
     Syscalls::Init();
@@ -303,7 +302,7 @@ TEST_CASE("Integration::Homebrew::WriteAndExit", "[integration]")
             return 0;
         }, 1);
 
-    const char msg[] = "Hello from homebrew!\n";
+    const char msg[] = "Hello from Phase 8 homebrew!\n";
     // Build: write(1, msg, len) then exit(0)
     // write: rax=1, rdi=1, rsi=msg_ptr, rdx=len
     // exit:  rax=60, rdi=0
@@ -324,6 +323,8 @@ TEST_CASE("Integration::Homebrew::WriteAndExit", "[integration]")
         0xF4
     };
 
+    // Patch in actual RSI (msg pointer) at runtime — inline via register
+    // The write syscall ignores RSI in stub mode; we just run the program
     Cpu::GetContext().rip = reinterpret_cast<uint64_t>(code);
     Cpu::GetContext().gpr_set(Cpu::Reg::RSI, reinterpret_cast<uint64_t>(msg));
     Cpu::GetContext().gpr_set(Cpu::Reg::RDX, sizeof(msg)-1);
@@ -344,7 +345,7 @@ TEST_CASE("Integration::Homebrew::WriteAndExit", "[integration]")
 
 // ── Stats validation after full run ──────────────────────────────────────
 
-TEST_CASE("Integration::Stats::AllModulesReport", "[integration]")
+TEST_CASE("Phase8::Integration::Stats::AllModulesReport", "[integration][phase8]")
 {
     Memory::Init();
     Cpu::Init();
