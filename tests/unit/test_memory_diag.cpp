@@ -1,25 +1,25 @@
-// PS5x – Memory Diagnostics tests (Phase 4)
+// ChuckStation5 – Memory Diagnostics tests (Phase 4)
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Logger/Logger.h"
-#include "PS5x/Memory/Memory.h"
-#include "PS5x/MemoryDiag/MemoryDiag.h"
+#include "ChuckStation5/Logger/Logger.h"
+#include "ChuckStation5/Memory/Memory.h"
+#include "ChuckStation5/MemoryDiag/MemoryDiag.h"
 
 #include <cstring>
 
-using namespace PS5x::MemoryDiag;
+using namespace ChuckStation5::MemoryDiag;
 
 static void Setup()
 {
-    PS5x::Logger::Init("", false, PS5x::Logger::Level::Off);
-    PS5x::Memory::Init();
+    ChuckStation5::Logger::Init("", false, ChuckStation5::Logger::Level::Off);
+    ChuckStation5::Memory::Init();
     Init();
 }
 static void Teardown()
 {
     Shutdown();
-    PS5x::Memory::Shutdown();
-    PS5x::Logger::Shutdown();
+    ChuckStation5::Memory::Shutdown();
+    ChuckStation5::Logger::Shutdown();
 }
 
 // ── Snapshot ──────────────────────────────────────────────────────────────
@@ -39,14 +39,14 @@ TEST_CASE("MemDiag – Multiple snapshots accumulate", "[memdiag]")
 {
     Setup();
     TakeSnapshot("A");
-    uintptr_t b = PS5x::Memory::Map(0, PS5x::Memory::PAGE_SIZE,
-                                     PS5x::Memory::Prot::RW,
-                                     PS5x::Memory::AllocType::Data, "diag-test");
+    uintptr_t b = ChuckStation5::Memory::Map(0, ChuckStation5::Memory::PAGE_SIZE,
+                                     ChuckStation5::Memory::Prot::RW,
+                                     ChuckStation5::Memory::AllocType::Data, "diag-test");
     TakeSnapshot("B");
     auto snaps = GetSnapshots();
     REQUIRE(snaps.size() == 2);
     REQUIRE(snaps[1].stats.regionCount > snaps[0].stats.regionCount);
-    PS5x::Memory::Unmap(b, PS5x::Memory::PAGE_SIZE);
+    ChuckStation5::Memory::Unmap(b, ChuckStation5::Memory::PAGE_SIZE);
     Teardown();
 }
 
@@ -64,27 +64,27 @@ TEST_CASE("MemDiag – DiffSnapshots detects new region", "[memdiag]")
 {
     Setup();
     TakeSnapshot("before");
-    uintptr_t b = PS5x::Memory::Map(0, PS5x::Memory::PAGE_SIZE,
-                                     PS5x::Memory::Prot::RW,
-                                     PS5x::Memory::AllocType::Data, "diff-region");
+    uintptr_t b = ChuckStation5::Memory::Map(0, ChuckStation5::Memory::PAGE_SIZE,
+                                     ChuckStation5::Memory::Prot::RW,
+                                     ChuckStation5::Memory::AllocType::Data, "diff-region");
     TakeSnapshot("after");
     auto snaps = GetSnapshots();
     REQUIRE(snaps.size() == 2);
     std::string diff = DiffSnapshots(snaps[0], snaps[1]);
     REQUIRE(!diff.empty());
     REQUIRE(diff.find("+") != std::string::npos); // new region detected
-    PS5x::Memory::Unmap(b, PS5x::Memory::PAGE_SIZE);
+    ChuckStation5::Memory::Unmap(b, ChuckStation5::Memory::PAGE_SIZE);
     Teardown();
 }
 
 TEST_CASE("MemDiag – DiffSnapshots detects removed region", "[memdiag]")
 {
     Setup();
-    uintptr_t b = PS5x::Memory::Map(0, PS5x::Memory::PAGE_SIZE,
-                                     PS5x::Memory::Prot::RW,
-                                     PS5x::Memory::AllocType::Data, "remove-me");
+    uintptr_t b = ChuckStation5::Memory::Map(0, ChuckStation5::Memory::PAGE_SIZE,
+                                     ChuckStation5::Memory::Prot::RW,
+                                     ChuckStation5::Memory::AllocType::Data, "remove-me");
     TakeSnapshot("with-region");
-    PS5x::Memory::Unmap(b, PS5x::Memory::PAGE_SIZE);
+    ChuckStation5::Memory::Unmap(b, ChuckStation5::Memory::PAGE_SIZE);
     TakeSnapshot("without-region");
     auto snaps = GetSnapshots();
     std::string diff = DiffSnapshots(snaps[0], snaps[1]);
@@ -161,20 +161,20 @@ TEST_CASE("MemDiag – ComputeFragmentation with no regions", "[memdiag]")
 TEST_CASE("MemDiag – ComputeFragmentation with regions", "[memdiag]")
 {
     Setup();
-    uintptr_t a = PS5x::Memory::Map(0, PS5x::Memory::PAGE_SIZE,
-                                     PS5x::Memory::Prot::RW,
-                                     PS5x::Memory::AllocType::Data, "frag-a");
-    uintptr_t b = PS5x::Memory::Map(0, PS5x::Memory::PAGE_SIZE * 2,
-                                     PS5x::Memory::Prot::RW,
-                                     PS5x::Memory::AllocType::Data, "frag-b");
+    uintptr_t a = ChuckStation5::Memory::Map(0, ChuckStation5::Memory::PAGE_SIZE,
+                                     ChuckStation5::Memory::Prot::RW,
+                                     ChuckStation5::Memory::AllocType::Data, "frag-a");
+    uintptr_t b = ChuckStation5::Memory::Map(0, ChuckStation5::Memory::PAGE_SIZE * 2,
+                                     ChuckStation5::Memory::Prot::RW,
+                                     ChuckStation5::Memory::AllocType::Data, "frag-b");
 
     auto rep = ComputeFragmentation();
     REQUIRE(rep.regionCount >= 2);
-    REQUIRE(rep.totalCommittedBytes >= PS5x::Memory::PAGE_SIZE * 3);
+    REQUIRE(rep.totalCommittedBytes >= ChuckStation5::Memory::PAGE_SIZE * 3);
     REQUIRE(rep.fragmentationPct > 0.0);
 
-    PS5x::Memory::Unmap(a, PS5x::Memory::PAGE_SIZE);
-    PS5x::Memory::Unmap(b, PS5x::Memory::PAGE_SIZE * 2);
+    ChuckStation5::Memory::Unmap(a, ChuckStation5::Memory::PAGE_SIZE);
+    ChuckStation5::Memory::Unmap(b, ChuckStation5::Memory::PAGE_SIZE * 2);
     Teardown();
 }
 
@@ -183,28 +183,28 @@ TEST_CASE("MemDiag – ComputeFragmentation with regions", "[memdiag]")
 TEST_CASE("MemDiag – GetOverlay returns valid stats", "[memdiag]")
 {
     Setup();
-    uintptr_t b = PS5x::Memory::Map(0, PS5x::Memory::PAGE_SIZE,
-                                     PS5x::Memory::Prot::RW,
-                                     PS5x::Memory::AllocType::Data, "overlay-test");
+    uintptr_t b = ChuckStation5::Memory::Map(0, ChuckStation5::Memory::PAGE_SIZE,
+                                     ChuckStation5::Memory::Prot::RW,
+                                     ChuckStation5::Memory::AllocType::Data, "overlay-test");
 
     auto ov = GetOverlay();
-    REQUIRE(ov.committed >= PS5x::Memory::PAGE_SIZE);
+    REQUIRE(ov.committed >= ChuckStation5::Memory::PAGE_SIZE);
     REQUIRE(ov.regionCount >= 1);
 
-    PS5x::Memory::Unmap(b, PS5x::Memory::PAGE_SIZE);
+    ChuckStation5::Memory::Unmap(b, ChuckStation5::Memory::PAGE_SIZE);
     Teardown();
 }
 
 TEST_CASE("MemDiag – FormatOverlay returns non-empty string", "[memdiag]")
 {
     Setup();
-    uintptr_t b = PS5x::Memory::Map(0, PS5x::Memory::PAGE_SIZE,
-                                     PS5x::Memory::Prot::RW,
-                                     PS5x::Memory::AllocType::Data, "fmt");
+    uintptr_t b = ChuckStation5::Memory::Map(0, ChuckStation5::Memory::PAGE_SIZE,
+                                     ChuckStation5::Memory::Prot::RW,
+                                     ChuckStation5::Memory::AllocType::Data, "fmt");
     auto s = FormatOverlay();
     REQUIRE(!s.empty());
     REQUIRE(s.find("Mem:") != std::string::npos);
-    PS5x::Memory::Unmap(b, PS5x::Memory::PAGE_SIZE);
+    ChuckStation5::Memory::Unmap(b, ChuckStation5::Memory::PAGE_SIZE);
     Teardown();
 }
 
@@ -213,21 +213,21 @@ TEST_CASE("MemDiag – FormatOverlay returns non-empty string", "[memdiag]")
 TEST_CASE("MemDiag – DumpMemoryMap does not crash", "[memdiag]")
 {
     Setup();
-    uintptr_t b = PS5x::Memory::Map(0, PS5x::Memory::PAGE_SIZE,
-                                     PS5x::Memory::Prot::RW,
-                                     PS5x::Memory::AllocType::Data, "dump-test");
+    uintptr_t b = ChuckStation5::Memory::Map(0, ChuckStation5::Memory::PAGE_SIZE,
+                                     ChuckStation5::Memory::Prot::RW,
+                                     ChuckStation5::Memory::AllocType::Data, "dump-test");
     DumpMemoryMap();
     DumpFragmentation();
-    PS5x::Memory::Unmap(b, PS5x::Memory::PAGE_SIZE);
+    ChuckStation5::Memory::Unmap(b, ChuckStation5::Memory::PAGE_SIZE);
     Teardown();
 }
 
 TEST_CASE("MemDiag – SearchPattern finds known bytes", "[memdiag]")
 {
     Setup();
-    uintptr_t b = PS5x::Memory::Map(0, PS5x::Memory::PAGE_SIZE,
-                                     PS5x::Memory::Prot::RW,
-                                     PS5x::Memory::AllocType::Data, "search");
+    uintptr_t b = ChuckStation5::Memory::Map(0, ChuckStation5::Memory::PAGE_SIZE,
+                                     ChuckStation5::Memory::Prot::RW,
+                                     ChuckStation5::Memory::AllocType::Data, "search");
     // Write a distinctive pattern at known offset
     auto* ptr = reinterpret_cast<uint8_t*>(b + 64);
     const uint8_t pattern[] = {0xDE, 0xAD, 0xBE, 0xEF};
@@ -240,7 +240,7 @@ TEST_CASE("MemDiag – SearchPattern finds known bytes", "[memdiag]")
         if (addr == b + 64) { found = true; break; }
     REQUIRE(found);
 
-    PS5x::Memory::Unmap(b, PS5x::Memory::PAGE_SIZE);
+    ChuckStation5::Memory::Unmap(b, ChuckStation5::Memory::PAGE_SIZE);
     Teardown();
 }
 

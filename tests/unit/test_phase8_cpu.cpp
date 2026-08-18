@@ -1,11 +1,11 @@
-// PS5x – Phase 8 CPU Interpreter tests (expanded opcode coverage)
+// ChuckStation5 – Phase 8 CPU Interpreter tests (expanded opcode coverage)
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Cpu/Cpu.h"
+#include "ChuckStation5/Cpu/Cpu.h"
 #include <array>
 #include <cstring>
 
-using namespace PS5x::Cpu;
+using namespace ChuckStation5::Cpu;
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 

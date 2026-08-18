@@ -1,22 +1,22 @@
-// PS5x – Runtime Manager unit tests (Phase 3)
+// ChuckStation5 – Runtime Manager unit tests (Phase 3)
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Logger/Logger.h"
-#include "PS5x/Runtime/Runtime.h"
+#include "ChuckStation5/Logger/Logger.h"
+#include "ChuckStation5/Runtime/Runtime.h"
 
-using namespace PS5x::Runtime;
+using namespace ChuckStation5::Runtime;
 
 // Isolated registry per test: shutdown clears state between runs
 static void Setup()
 {
-    PS5x::Logger::Init("", false, PS5x::Logger::Level::Off);
+    ChuckStation5::Logger::Init("", false, ChuckStation5::Logger::Level::Off);
     Reset(); // clear previous registrations safely
 }
 static void Teardown()
 {
     ShutdownAll();
     Reset();
-    PS5x::Logger::Shutdown();
+    ChuckStation5::Logger::Shutdown();
 }
 
 TEST_CASE("Runtime – SubsystemName returns non-empty string", "[runtime]")

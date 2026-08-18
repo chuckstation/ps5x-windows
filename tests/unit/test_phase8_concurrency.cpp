@@ -1,21 +1,20 @@
-// PS5x – Phase 8 Concurrency / Thread-safety tests
+// ChuckStation5 – Phase 8 Concurrency / Thread-safety tests
 // SPDX-License-Identifier: MIT
-//
 // Tests that critical subsystems are safe under concurrent access.
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Logger/Logger.h"
-#include "PS5x/RuntimeEvents/RuntimeEvents.h"
-#include "PS5x/Memory/Memory.h"
-#include "PS5x/Cpu/Cpu.h"
-#include "PS5x/Syscalls/Syscalls.h"
-#include "PS5x/PerfTools/PerfTools.h"
+#include "ChuckStation5/Logger/Logger.h"
+#include "ChuckStation5/RuntimeEvents/RuntimeEvents.h"
+#include "ChuckStation5/Memory/Memory.h"
+#include "ChuckStation5/Cpu/Cpu.h"
+#include "ChuckStation5/Syscalls/Syscalls.h"
+#include "ChuckStation5/PerfTools/PerfTools.h"
 
 #include <atomic>
 #include <thread>
 #include <vector>
 #include <chrono>
 
-using namespace PS5x;
+using namespace ChuckStation5;
 
 // ── Logger thread-safety ──────────────────────────────────────────────────
 
@@ -27,8 +26,8 @@ TEST_CASE("Phase8::Concurrency::Logger::ConcurrentWrites", "[concurrency][phase8
 
     auto worker = [&](int id) {
         for (int i = 0; i < PER_THREAD; ++i) {
-            PS5X_DEBUG("[Thread %d] Line %d", id, i);
-            PS5X_INFO("[Thread %d] Info %d", id, i);
+            CHUCKSTATION5_DEBUG("[Thread %d] Line %d", id, i);
+            CHUCKSTATION5_INFO("[Thread %d] Info %d", id, i);
         }
         ++done;
     };

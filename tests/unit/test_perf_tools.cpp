@@ -1,25 +1,25 @@
-// PS5x – Performance Tools tests (Phase 5)
+// ChuckStation5 – Performance Tools tests (Phase 5)
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
-#include "PS5x/Logger/Logger.h"
-#include "PS5x/PerfTools/PerfTools.h"
+#include "ChuckStation5/Logger/Logger.h"
+#include "ChuckStation5/PerfTools/PerfTools.h"
 
 #include <atomic>
 #include <chrono>
 #include <thread>
 
-using namespace PS5x::PerfTools;
+using namespace ChuckStation5::PerfTools;
 
 static void Setup(size_t workers = 2)
 {
-    PS5x::Logger::Init("", false, PS5x::Logger::Level::Off);
+    ChuckStation5::Logger::Init("", false, ChuckStation5::Logger::Level::Off);
     Init(workers);
 }
 static void Teardown()
 {
     Shutdown();
-    PS5x::Logger::Shutdown();
+    ChuckStation5::Logger::Shutdown();
 }
 
 // ── Frame timer ───────────────────────────────────────────────────────────

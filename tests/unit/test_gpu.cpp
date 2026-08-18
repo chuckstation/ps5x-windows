@@ -1,59 +1,59 @@
-// PS5x – GPU unit tests
+// ChuckStation5 – GPU unit tests
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Logger/Logger.h"
-#include "PS5x/GPU/GPU.h"
-#include "PS5x/Renderer/RendererBackend.h"
-#include "PS5x/Config/Config.h"
+#include "ChuckStation5/Logger/Logger.h"
+#include "ChuckStation5/GPU/GPU.h"
+#include "ChuckStation5/Renderer/RendererBackend.h"
+#include "ChuckStation5/Config/Config.h"
 
 TEST_CASE("GPU – Init requires valid backend", "[gpu]")
 {
-    PS5x::Logger::Init("", false, PS5x::Logger::Level::Off);
+    ChuckStation5::Logger::Init("", false, ChuckStation5::Logger::Level::Off);
 
     // Null backend should fail
-    REQUIRE(!PS5x::GPU::Init(nullptr));
+    REQUIRE(!ChuckStation5::GPU::Init(nullptr));
 
-    PS5x::Logger::Shutdown();
+    ChuckStation5::Logger::Shutdown();
 }
 
 TEST_CASE("GPU – Init / Shutdown with stub Vulkan backend", "[gpu]")
 {
-    PS5x::Logger::Init("", false, PS5x::Logger::Level::Off);
-    PS5x::Config::Reset();
+    ChuckStation5::Logger::Init("", false, ChuckStation5::Logger::Level::Off);
+    ChuckStation5::Config::Reset();
 
-    auto backend = PS5x::Renderer::CreateBackend(PS5x::Config::GraphicsBackend::Vulkan);
+    auto backend = ChuckStation5::Renderer::CreateBackend(ChuckStation5::Config::GraphicsBackend::Vulkan);
     REQUIRE(backend != nullptr);
 
-    PS5x::Renderer::SwapChainDesc sc;
+    ChuckStation5::Renderer::SwapChainDesc sc;
     sc.width = 1280; sc.height = 720;
-    REQUIRE(backend->Init(PS5x::Config::Get().graphics, sc));
+    REQUIRE(backend->Init(ChuckStation5::Config::Get().graphics, sc));
 
-    REQUIRE(PS5x::GPU::Init(backend.get()));
-    PS5x::GPU::Shutdown();
+    REQUIRE(ChuckStation5::GPU::Init(backend.get()));
+    ChuckStation5::GPU::Shutdown();
     backend->Shutdown();
 
-    PS5x::Logger::Shutdown();
+    ChuckStation5::Logger::Shutdown();
 }
 
 TEST_CASE("GPU – Submit empty command buffers", "[gpu]")
 {
-    PS5x::Logger::Init("", false, PS5x::Logger::Level::Off);
-    PS5x::Config::Reset();
+    ChuckStation5::Logger::Init("", false, ChuckStation5::Logger::Level::Off);
+    ChuckStation5::Config::Reset();
 
-    auto backend = PS5x::Renderer::CreateBackend(PS5x::Config::GraphicsBackend::OpenGL);
+    auto backend = ChuckStation5::Renderer::CreateBackend(ChuckStation5::Config::GraphicsBackend::OpenGL);
     REQUIRE(backend);
-    PS5x::Renderer::SwapChainDesc sc;
+    ChuckStation5::Renderer::SwapChainDesc sc;
     sc.width = 640; sc.height = 480;
-    backend->Init(PS5x::Config::Get().graphics, sc);
-    PS5x::GPU::Init(backend.get());
+    backend->Init(ChuckStation5::Config::Get().graphics, sc);
+    ChuckStation5::GPU::Init(backend.get());
 
-    PS5x::GPU::CommandBuffer dcb, ccb;
-    REQUIRE(PS5x::GPU::Submit(dcb, ccb));
+    ChuckStation5::GPU::CommandBuffer dcb, ccb;
+    REQUIRE(ChuckStation5::GPU::Submit(dcb, ccb));
 
-    PS5x::GPU::ClearRenderTarget(0, 0.f, 0.f, 0.f, 1.f);
-    PS5x::GPU::ClearDepthTarget(1.0f, 0);
+    ChuckStation5::GPU::ClearRenderTarget(0, 0.f, 0.f, 0.f, 1.f);
+    ChuckStation5::GPU::ClearDepthTarget(1.0f, 0);
 
-    PS5x::GPU::Shutdown();
+    ChuckStation5::GPU::Shutdown();
     backend->Shutdown();
-    PS5x::Logger::Shutdown();
+    ChuckStation5::Logger::Shutdown();
 }

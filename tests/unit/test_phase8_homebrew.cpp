@@ -1,21 +1,20 @@
-// PS5x – Phase 8 Homebrew Validation Suite
+// ChuckStation5 – Phase 8 Homebrew Validation Suite
 // SPDX-License-Identifier: MIT
-//
 // Regression corpus for simple homebrew scenarios:
 //   Hello World, Console logging, File I/O, Graphics, Audio,
 //   Input, Threading, Memory allocation.
 // All tests use synthesised programs — no real ELF required.
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Cpu/Cpu.h"
-#include "PS5x/Syscalls/Syscalls.h"
-#include "PS5x/Memory/Memory.h"
-#include "PS5x/Audio/Audio.h"
-#include "PS5x/Input/Input.h"
-#include "PS5x/Filesystem/Filesystem.h"
-#include "PS5x/GPU/GPU.h"
-#include "PS5x/CommandProcessor/CommandProcessor.h"
-#include "PS5x/RuntimeEvents/RuntimeEvents.h"
-#include "PS5x/Logger/Logger.h"
+#include "ChuckStation5/Cpu/Cpu.h"
+#include "ChuckStation5/Syscalls/Syscalls.h"
+#include "ChuckStation5/Memory/Memory.h"
+#include "ChuckStation5/Audio/Audio.h"
+#include "ChuckStation5/Input/Input.h"
+#include "ChuckStation5/Filesystem/Filesystem.h"
+#include "ChuckStation5/GPU/GPU.h"
+#include "ChuckStation5/CommandProcessor/CommandProcessor.h"
+#include "ChuckStation5/RuntimeEvents/RuntimeEvents.h"
+#include "ChuckStation5/Logger/Logger.h"
 
 #include <array>
 #include <cstring>
@@ -23,8 +22,8 @@
 #include <chrono>
 #include <vector>
 
-using namespace PS5x;
-using namespace PS5x::CommandProcessor;
+using namespace ChuckStation5;
+using namespace ChuckStation5::CommandProcessor;
 
 // ── Helper: build and run a tiny x86-64 program ───────────────────────────
 

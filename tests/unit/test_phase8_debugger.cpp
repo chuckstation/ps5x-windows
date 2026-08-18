@@ -1,16 +1,15 @@
-// PS5x – Phase 8 Debugger Polish tests
+// ChuckStation5 – Phase 8 Debugger Polish tests
 // SPDX-License-Identifier: MIT
-//
 // Covers: register viewer, call stack, memory viewer, module browser,
 //         timeline, symbol browser, breakpoint manager, event browser.
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Debugger/Debugger.h"
-#include "PS5x/Cpu/Cpu.h"
-#include "PS5x/Memory/Memory.h"
-#include "PS5x/RuntimeEvents/RuntimeEvents.h"
-#include "PS5x/ModuleRegistry/ModuleRegistry.h"
+#include "ChuckStation5/Debugger/Debugger.h"
+#include "ChuckStation5/Cpu/Cpu.h"
+#include "ChuckStation5/Memory/Memory.h"
+#include "ChuckStation5/RuntimeEvents/RuntimeEvents.h"
+#include "ChuckStation5/ModuleRegistry/ModuleRegistry.h"
 
-using namespace PS5x;
+using namespace ChuckStation5;
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────
 

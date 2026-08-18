@@ -1,9 +1,9 @@
-// PS5x – Phase 7 CPU Interpreter tests
+// ChuckStation5 – Phase 7 CPU Interpreter tests
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Cpu/Cpu.h"
+#include "ChuckStation5/Cpu/Cpu.h"
 
-using namespace PS5x::Cpu;
+using namespace ChuckStation5::Cpu;
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 

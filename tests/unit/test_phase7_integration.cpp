@@ -1,13 +1,13 @@
-// PS5x – Phase 7 Integration tests
+// ChuckStation5 – Phase 7 Integration tests
 // Simulates a minimal homebrew execution: init → load → run → syscall → exit
 // No real ELF is loaded — we synthesize a tiny x86-64 program in memory.
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Cpu/Cpu.h"
-#include "PS5x/Syscalls/Syscalls.h"
-#include "PS5x/CommandProcessor/CommandProcessor.h"
-#include "PS5x/RuntimeEvents/RuntimeEvents.h"
-#include "PS5x/GPU/GPU.h"
+#include "ChuckStation5/Cpu/Cpu.h"
+#include "ChuckStation5/Syscalls/Syscalls.h"
+#include "ChuckStation5/CommandProcessor/CommandProcessor.h"
+#include "ChuckStation5/RuntimeEvents/RuntimeEvents.h"
+#include "ChuckStation5/GPU/GPU.h"
 
 #include <array>
 #include <thread>
@@ -15,7 +15,7 @@
 #include <cstring>
 #include <vector>
 
-using namespace PS5x;
+using namespace ChuckStation5;
 
 // ── Helper: build a tiny "hello world" x86-64 program ────────────────────
 // Program logic:

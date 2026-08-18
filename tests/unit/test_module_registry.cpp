@@ -1,18 +1,18 @@
-// PS5x – Module Registry tests (Phase 4)
+// ChuckStation5 – Module Registry tests (Phase 4)
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Logger/Logger.h"
-#include "PS5x/Memory/Memory.h"
-#include "PS5x/Loader/Loader.h"
-#include "PS5x/ModuleRegistry/ModuleRegistry.h"
+#include "ChuckStation5/Logger/Logger.h"
+#include "ChuckStation5/Memory/Memory.h"
+#include "ChuckStation5/Loader/Loader.h"
+#include "ChuckStation5/ModuleRegistry/ModuleRegistry.h"
 
 #include <filesystem>
 #include <fstream>
 
 namespace fs = std::filesystem;
-using namespace PS5x::ModuleRegistry;
+using namespace ChuckStation5::ModuleRegistry;
 
-static fs::path WriteTinyElf(const char* fname = "ps5x_modreg.elf")
+static fs::path WriteTinyElf(const char* fname = "chuckstation5_modreg.elf")
 {
     auto path = fs::temp_directory_path() / fname;
 #pragma pack(push,1)
@@ -43,17 +43,17 @@ static fs::path WriteTinyElf(const char* fname = "ps5x_modreg.elf")
 
 static void Setup()
 {
-    PS5x::Logger::Init("",false,PS5x::Logger::Level::Off);
-    PS5x::Memory::Init();
-    PS5x::Loader::Init();
+    ChuckStation5::Logger::Init("",false,ChuckStation5::Logger::Level::Off);
+    ChuckStation5::Memory::Init();
+    ChuckStation5::Loader::Init();
     Init();
 }
 static void Teardown()
 {
     Shutdown();
-    PS5x::Loader::Shutdown();
-    PS5x::Memory::Shutdown();
-    PS5x::Logger::Shutdown();
+    ChuckStation5::Loader::Shutdown();
+    ChuckStation5::Memory::Shutdown();
+    ChuckStation5::Logger::Shutdown();
 }
 
 TEST_CASE("ModReg – Init produces empty registry", "[modreg]")
@@ -68,7 +68,7 @@ TEST_CASE("ModReg – Init produces empty registry", "[modreg]")
 TEST_CASE("ModReg – Register main module", "[modreg]")
 {
     Setup();
-    PS5x::Loader::ExecutableInfo info;
+    ChuckStation5::Loader::ExecutableInfo info;
     info.imageBase  = 0x400000;
     info.entryPoint = 0x401000;
     info.loaded     = true;
@@ -89,7 +89,7 @@ TEST_CASE("ModReg – Register main module", "[modreg]")
 TEST_CASE("ModReg – Register same name returns existing id", "[modreg]")
 {
     Setup();
-    PS5x::Loader::ExecutableInfo info;
+    ChuckStation5::Loader::ExecutableInfo info;
     auto id1 = Register("libSceKernel.sprx", "/system/lib/libSceKernel.sprx", info);
     auto id2 = Register("libSceKernel.sprx", "/system/lib/libSceKernel.sprx", info);
     REQUIRE(id1 == id2);
@@ -101,7 +101,7 @@ TEST_CASE("ModReg – Register same name returns existing id", "[modreg]")
 TEST_CASE("ModReg – GetModuleByName lookup", "[modreg]")
 {
     Setup();
-    PS5x::Loader::ExecutableInfo info;
+    ChuckStation5::Loader::ExecutableInfo info;
     auto id = Register("mymod.sprx", "/lib/mymod.sprx", info);
     auto found = GetModuleByName("mymod.sprx");
     REQUIRE(found.has_value());
@@ -127,7 +127,7 @@ TEST_CASE("ModReg – Load ELF and registers it", "[modreg]")
 TEST_CASE("ModReg – Unload decrements refCount", "[modreg]")
 {
     Setup();
-    PS5x::Loader::ExecutableInfo info;
+    ChuckStation5::Loader::ExecutableInfo info;
     info.loaded = false; // not actually mapped, safe to unload
     auto id = Register("testmod", "/test/testmod", info);
     REQUIRE(GetModuleCount() == 1);
@@ -140,7 +140,7 @@ TEST_CASE("ModReg – Unload decrements refCount", "[modreg]")
 TEST_CASE("ModReg – Retain increments refCount", "[modreg]")
 {
     Setup();
-    PS5x::Loader::ExecutableInfo info;
+    ChuckStation5::Loader::ExecutableInfo info;
     auto id = Register("retained", "/lib/retained", info);
     REQUIRE(Retain(id));
     auto desc = GetModule(id);
@@ -155,7 +155,7 @@ TEST_CASE("ModReg – Retain increments refCount", "[modreg]")
 TEST_CASE("ModReg – GetLoadOrder matches registration order", "[modreg]")
 {
     Setup();
-    PS5x::Loader::ExecutableInfo info;
+    ChuckStation5::Loader::ExecutableInfo info;
     auto a = Register("a.sprx", "/a", info);
     auto b = Register("b.sprx", "/b", info);
     auto c = Register("c.sprx", "/c", info);
@@ -175,8 +175,8 @@ TEST_CASE("ModReg – GetLoadOrder matches registration order", "[modreg]")
 TEST_CASE("ModReg – ResolveSymbol finds exported symbol", "[modreg]")
 {
     Setup();
-    PS5x::Loader::ExecutableInfo info;
-    PS5x::Loader::Symbol sym;
+    ChuckStation5::Loader::ExecutableInfo info;
+    ChuckStation5::Loader::Symbol sym;
     sym.name  = "sceKernelGetModuleInfo";
     sym.value = 0x1000;
     sym.size  = 64;
@@ -200,7 +200,7 @@ TEST_CASE("ModReg – ResolveSymbol finds exported symbol", "[modreg]")
 TEST_CASE("ModReg – DumpModules does not crash", "[modreg]")
 {
     Setup();
-    PS5x::Loader::ExecutableInfo info;
+    ChuckStation5::Loader::ExecutableInfo info;
     Register("mod1", "/lib/mod1", info);
     Register("mod2", "/lib/mod2", info);
     DumpModules();
@@ -211,9 +211,9 @@ TEST_CASE("ModReg – DumpModules does not crash", "[modreg]")
 TEST_CASE("ModReg – GetDependents finds reverse deps", "[modreg]")
 {
     Setup();
-    PS5x::Loader::ExecutableInfo info;
+    ChuckStation5::Loader::ExecutableInfo info;
     auto base = Register("base", "/base", info);
-    PS5x::Loader::ExecutableInfo info2;
+    ChuckStation5::Loader::ExecutableInfo info2;
     ModuleDesc d2; // build a module with base as dep manually through Register
     // Register dep module, then manually add dep
     auto dep = Register("dep", "/dep", info);

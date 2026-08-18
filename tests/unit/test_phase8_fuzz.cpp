@@ -1,22 +1,21 @@
-// PS5x – Phase 8 Fuzz / Robustness tests
+// ChuckStation5 – Phase 8 Fuzz / Robustness tests
 // SPDX-License-Identifier: MIT
-//
 // Validates robustness of loaders and parsers against malformed input.
 // These are deterministic property tests (pseudo-random with fixed seeds),
 // not libFuzzer harnesses, so they run under the normal test runner.
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Cpu/Cpu.h"
-#include "PS5x/Loader/Loader.h"
-#include "PS5x/Filesystem/Filesystem.h"
-#include "PS5x/CommandProcessor/CommandProcessor.h"
-#include "PS5x/GPU/GPU.h"
-#include "PS5x/Memory/Memory.h"
+#include "ChuckStation5/Cpu/Cpu.h"
+#include "ChuckStation5/Loader/Loader.h"
+#include "ChuckStation5/Filesystem/Filesystem.h"
+#include "ChuckStation5/CommandProcessor/CommandProcessor.h"
+#include "ChuckStation5/GPU/GPU.h"
+#include "ChuckStation5/Memory/Memory.h"
 #include <cstring>
 #include <random>
 #include <vector>
 
-using namespace PS5x;
-using namespace PS5x::CommandProcessor;
+using namespace ChuckStation5;
+using namespace ChuckStation5::CommandProcessor;
 
 // ── Helper: deterministic random bytes ────────────────────────────────────
 

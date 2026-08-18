@@ -1,9 +1,9 @@
-// PS5x – Phase 6 Execution engine tests
+// ChuckStation5 – Phase 6 Execution engine tests
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Execution/Execution.h"
+#include "ChuckStation5/Execution/Execution.h"
 
-using namespace PS5x::Execution;
+using namespace ChuckStation5::Execution;
 
 TEST_CASE("Phase6::Execution::ExitReasonNames", "[execution][phase6]")
 {

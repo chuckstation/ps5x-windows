@@ -1,23 +1,22 @@
-// PS5x – Phase 8 Integration tests
+// ChuckStation5 – Phase 8 Integration tests
 // SPDX-License-Identifier: MIT
-//
 // End-to-end subsystem integration: CPU+Syscall+Memory+GPU+Debugger+Events.
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Cpu/Cpu.h"
-#include "PS5x/Syscalls/Syscalls.h"
-#include "PS5x/Memory/Memory.h"
-#include "PS5x/GPU/GPU.h"
-#include "PS5x/CommandProcessor/CommandProcessor.h"
-#include "PS5x/Debugger/Debugger.h"
-#include "PS5x/PerfTools/PerfTools.h"
-#include "PS5x/RuntimeEvents/RuntimeEvents.h"
-#include "PS5x/Audio/Audio.h"
-#include "PS5x/Input/Input.h"
-#include "PS5x/Logger/Logger.h"
-#include "PS5x/Process/Process.h"
+#include "ChuckStation5/Cpu/Cpu.h"
+#include "ChuckStation5/Syscalls/Syscalls.h"
+#include "ChuckStation5/Memory/Memory.h"
+#include "ChuckStation5/GPU/GPU.h"
+#include "ChuckStation5/CommandProcessor/CommandProcessor.h"
+#include "ChuckStation5/Debugger/Debugger.h"
+#include "ChuckStation5/PerfTools/PerfTools.h"
+#include "ChuckStation5/RuntimeEvents/RuntimeEvents.h"
+#include "ChuckStation5/Audio/Audio.h"
+#include "ChuckStation5/Input/Input.h"
+#include "ChuckStation5/Logger/Logger.h"
+#include "ChuckStation5/Process/Process.h"
 
-using namespace PS5x;
-using namespace PS5x::CommandProcessor;
+using namespace ChuckStation5;
+using namespace ChuckStation5::CommandProcessor;
 
 // ── Full subsystem init/shutdown ──────────────────────────────────────────
 

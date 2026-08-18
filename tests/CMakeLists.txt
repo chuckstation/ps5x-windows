@@ -13,47 +13,47 @@ else()
   FetchContent_MakeAvailable(Catch2)
 endif()
 
-set(PS5X_ALL_LIBS
-    ps5x_logger
-    ps5x_config
-    ps5x_memory
-    ps5x_kernel
-    ps5x_loader
-    ps5x_audio
-    ps5x_filesystem
-    ps5x_gpu
-    ps5x_renderer
-    ps5x_debugger
-    ps5x_kyty_adapter
-    ps5x_runtime
-    ps5x_kernel_runtime
-    ps5x_process
-    ps5x_input
-    ps5x_execution
-    ps5x_module_registry
-    ps5x_kernel_services
-    ps5x_memory_diag
-    ps5x_runtime_events
-    ps5x_dynamic_linker
-    ps5x_shader_cache
-    ps5x_perf_tools
-    ps5x_cpu
-    ps5x_syscalls
-    ps5x_command_processor
-    ps5x_crash_handler
-    ps5x_metrics
-    ps5x_save_state
-    ps5x_input_mapping)
+set(CHUCKSTATION5_ALL_LIBS
+    chuckstation5_logger
+    chuckstation5_config
+    chuckstation5_memory
+    chuckstation5_kernel
+    chuckstation5_loader
+    chuckstation5_audio
+    chuckstation5_filesystem
+    chuckstation5_gpu
+    chuckstation5_renderer
+    chuckstation5_debugger
+    chuckstation5_kyty_adapter
+    chuckstation5_runtime
+    chuckstation5_kernel_runtime
+    chuckstation5_process
+    chuckstation5_input
+    chuckstation5_execution
+    chuckstation5_module_registry
+    chuckstation5_kernel_services
+    chuckstation5_memory_diag
+    chuckstation5_runtime_events
+    chuckstation5_dynamic_linker
+    chuckstation5_shader_cache
+    chuckstation5_perf_tools
+    chuckstation5_cpu
+    chuckstation5_syscalls
+    chuckstation5_command_processor
+    chuckstation5_crash_handler
+    chuckstation5_metrics
+    chuckstation5_save_state
+    chuckstation5_input_mapping)
 
-function(ps5x_test NAME)
+function(chuckstation5_test NAME)
   add_executable(test_${NAME} ${ARGN})
   target_link_libraries(test_${NAME} PRIVATE Catch2::Catch2WithMain
-                                             ${PS5X_ALL_LIBS})
+                                             ${CHUCKSTATION5_ALL_LIBS})
   target_include_directories(
-    test_${NAME} PRIVATE "${CMAKE_SOURCE_DIR}/source/ps5x/include"
+    test_${NAME} PRIVATE "${CMAKE_SOURCE_DIR}/source/chuckstation5/include"
                          "${CMAKE_BINARY_DIR}/generated")
   target_compile_features(test_${NAME} PRIVATE cxx_std_20)
-  add_test(NAME ps5x::${NAME} COMMAND test_${NAME})
+  add_test(NAME chuckstation5::${NAME} COMMAND test_${NAME})
 endfunction()
 
 add_subdirectory(unit)

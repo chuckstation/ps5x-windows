@@ -1,12 +1,12 @@
-// PS5x – Phase 6 KernelRuntime tests (namespaces, wait queues, IPC, limits)
+// ChuckStation5 – Phase 6 KernelRuntime tests (namespaces, wait queues, IPC, limits)
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/KernelRuntime/KernelRuntime.h"
+#include "ChuckStation5/KernelRuntime/KernelRuntime.h"
 #include <thread>
 #include <atomic>
 #include <chrono>
 
-using namespace PS5x::KernelRuntime;
+using namespace ChuckStation5::KernelRuntime;
 
 // ── Object namespace tests ─────────────────────────────────────────────────
 

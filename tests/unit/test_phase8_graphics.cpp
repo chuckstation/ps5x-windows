@@ -1,20 +1,19 @@
-// PS5x – Phase 8 Graphics Validation tests
+// ChuckStation5 – Phase 8 Graphics Validation tests
 // SPDX-License-Identifier: MIT
-//
 // Validates the GPU/Renderer pipeline for progressive rendering demos:
 //   triangle → textured quad → off-screen render → frame capture.
 // No real GPU is present; all validation is against the stub/mock backend.
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/GPU/GPU.h"
-#include "PS5x/CommandProcessor/CommandProcessor.h"
-#include "PS5x/Renderer/RendererBackend.h"
-#include "PS5x/RuntimeEvents/RuntimeEvents.h"
-#include "PS5x/ShaderCache/ShaderCache.h"
+#include "ChuckStation5/GPU/GPU.h"
+#include "ChuckStation5/CommandProcessor/CommandProcessor.h"
+#include "ChuckStation5/Renderer/RendererBackend.h"
+#include "ChuckStation5/RuntimeEvents/RuntimeEvents.h"
+#include "ChuckStation5/ShaderCache/ShaderCache.h"
 
-using namespace PS5x;
-using namespace PS5x::GPU;
-using namespace PS5x::CommandProcessor;
-using namespace PS5x::ShaderCache;
+using namespace ChuckStation5;
+using namespace ChuckStation5::GPU;
+using namespace ChuckStation5::CommandProcessor;
+using namespace ChuckStation5::ShaderCache;
 
 // ── GPU lifecycle ─────────────────────────────────────────────────────────
 

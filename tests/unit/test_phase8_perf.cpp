@@ -1,22 +1,21 @@
-// PS5x – Phase 8 Performance tests
+// ChuckStation5 – Phase 8 Performance tests
 // SPDX-License-Identifier: MIT
-//
 // Validates: hot-path benchmarks, interpreter throughput,
 //            memory allocation overhead, command processing speed,
 //            logging overhead, startup time measurement.
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/PerfTools/PerfTools.h"
-#include "PS5x/Cpu/Cpu.h"
-#include "PS5x/Memory/Memory.h"
-#include "PS5x/CommandProcessor/CommandProcessor.h"
-#include "PS5x/Logger/Logger.h"
-#include "PS5x/GPU/GPU.h"
+#include "ChuckStation5/PerfTools/PerfTools.h"
+#include "ChuckStation5/Cpu/Cpu.h"
+#include "ChuckStation5/Memory/Memory.h"
+#include "ChuckStation5/CommandProcessor/CommandProcessor.h"
+#include "ChuckStation5/Logger/Logger.h"
+#include "ChuckStation5/GPU/GPU.h"
 #include <chrono>
 #include <vector>
 #include <cstring>
 
-using namespace PS5x;
-using namespace PS5x::CommandProcessor;
+using namespace ChuckStation5;
+using namespace ChuckStation5::CommandProcessor;
 using Clock = std::chrono::steady_clock;
 using Ms    = std::chrono::duration<double, std::milli>;
 
@@ -261,7 +260,7 @@ TEST_CASE("Phase8::Perf::Logger::1000LinesOverhead", "[perf][phase8]")
 {
     auto t0 = Clock::now();
     for (int i = 0; i < 1000; ++i) {
-        PS5X_DEBUG("[Perf] Line %d", i);
+        CHUCKSTATION5_DEBUG("[Perf] Line %d", i);
     }
     auto t1 = Clock::now();
     double ms = Ms(t1 - t0).count();
@@ -273,7 +272,7 @@ TEST_CASE("Phase8::Perf::Logger::FilteredLinesNoOverhead", "[perf][phase8]")
     Logger::SetLevel(Logger::Level::Error); // suppress Debug/Info/Warn
     auto t0 = Clock::now();
     for (int i = 0; i < 5000; ++i) {
-        PS5X_DEBUG("[Perf] Suppressed line %d", i);
+        CHUCKSTATION5_DEBUG("[Perf] Suppressed line %d", i);
     }
     auto t1 = Clock::now();
     double ms = Ms(t1 - t0).count();
