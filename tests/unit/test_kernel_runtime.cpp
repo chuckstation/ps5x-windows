@@ -1,27 +1,27 @@
-// PS5x – KernelRuntime unit tests (Phase 3)
+// ChuckStation5 – KernelRuntime unit tests (Phase 3)
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Logger/Logger.h"
-#include "PS5x/Memory/Memory.h"
-#include "PS5x/KernelRuntime/KernelRuntime.h"
+#include "ChuckStation5/Logger/Logger.h"
+#include "ChuckStation5/Memory/Memory.h"
+#include "ChuckStation5/KernelRuntime/KernelRuntime.h"
 
 #include <atomic>
 #include <chrono>
 #include <thread>
 
-using namespace PS5x::KernelRuntime;
+using namespace ChuckStation5::KernelRuntime;
 
 static void Setup()
 {
-    PS5x::Logger::Init("", false, PS5x::Logger::Level::Off);
-    PS5x::Memory::Init();
+    ChuckStation5::Logger::Init("", false, ChuckStation5::Logger::Level::Off);
+    ChuckStation5::Memory::Init();
     Init();
 }
 static void Teardown()
 {
     Shutdown();
-    PS5x::Memory::Shutdown();
-    PS5x::Logger::Shutdown();
+    ChuckStation5::Memory::Shutdown();
+    ChuckStation5::Logger::Shutdown();
 }
 
 // ── Handle table ──────────────────────────────────────────────────────────

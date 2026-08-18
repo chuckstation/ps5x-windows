@@ -1,12 +1,12 @@
-// PS5x – Phase 6 Input tests
+// ChuckStation5 – Phase 6 Input tests
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
-#include "PS5x/Input/Input.h"
+#include "ChuckStation5/Input/Input.h"
 #include <thread>
 #include <chrono>
 
-using namespace PS5x::Input;
+using namespace ChuckStation5::Input;
 
 // ── Motion sensor ──────────────────────────────────────────────────────────
 

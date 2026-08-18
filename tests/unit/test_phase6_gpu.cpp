@@ -1,12 +1,12 @@
-// PS5x – Phase 6 GPU tests (queues, fences, barriers, stats)
+// ChuckStation5 – Phase 6 GPU tests (queues, fences, barriers, stats)
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/GPU/GPU.h"
+#include "ChuckStation5/GPU/GPU.h"
 #include <array>
 #include <thread>
 #include <chrono>
 
-using namespace PS5x::GPU;
+using namespace ChuckStation5::GPU;
 
 TEST_CASE("Phase6::GPU::CreateDestroyQueue_Graphics", "[gpu][phase6]")
 {

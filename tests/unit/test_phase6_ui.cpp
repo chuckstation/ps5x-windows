@@ -1,11 +1,11 @@
-// PS5x – Phase 6 UI tests (panels, workspace, status feeds)
+// ChuckStation5 – Phase 6 UI tests (panels, workspace, status feeds)
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
-#include "PS5x/UI/UI.h"
+#include "ChuckStation5/UI/UI.h"
 #include <filesystem>
 
-using namespace PS5x::UI;
+using namespace ChuckStation5::UI;
 
 // ── PanelName ─────────────────────────────────────────────────────────────
 
@@ -142,7 +142,7 @@ TEST_CASE("Phase6::UI::Feed::MultipleUpdatesNoRace", "[ui][phase6]")
 
 TEST_CASE("Phase6::UI::Workspace::SaveAndLoad", "[ui][phase6]")
 {
-    std::string path = "/tmp/ps5x_test_workspace.txt";
+    std::string path = "/tmp/chuckstation5_test_workspace.txt";
 
     // Set a known state
     PanelState s;
@@ -181,5 +181,5 @@ TEST_CASE("Phase6::UI::Workspace::SaveToInvalidPath", "[ui][phase6]")
 
 TEST_CASE("Phase6::UI::Workspace::LoadMissingFile", "[ui][phase6]")
 {
-    CHECK_FALSE(LoadWorkspace("/tmp/ps5x_nonexistent_workspace_xyz.txt"));
+    CHECK_FALSE(LoadWorkspace("/tmp/chuckstation5_nonexistent_workspace_xyz.txt"));
 }

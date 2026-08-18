@@ -1,8 +1,8 @@
-// PS5x – Shader Cache tests (Phase 5)
+// ChuckStation5 – Shader Cache tests (Phase 5)
 // SPDX-License-Identifier: MIT
-#include "PS5x/Logger/Logger.h"
-#include "PS5x/RuntimeEvents/RuntimeEvents.h"
-#include "PS5x/ShaderCache/ShaderCache.h"
+#include "ChuckStation5/Logger/Logger.h"
+#include "ChuckStation5/RuntimeEvents/RuntimeEvents.h"
+#include "ChuckStation5/ShaderCache/ShaderCache.h"
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
 
@@ -10,7 +10,7 @@
 #include <filesystem>
 #include <thread>
 
-using namespace PS5x::ShaderCache;
+using namespace ChuckStation5::ShaderCache;
 namespace fs = std::filesystem;
 
 static ShaderKey MakeKey(uint64_t spirvH, uint64_t pipeH, ShaderStage stage) {
@@ -26,14 +26,14 @@ static std::vector<uint8_t> FakeSPIRV(uint8_t seed) {
 }
 
 static void Setup(const fs::path &dir = "") {
-  PS5x::Logger::Init("", false, PS5x::Logger::Level::Off);
-  PS5x::RuntimeEvents::Init();
+  ChuckStation5::Logger::Init("", false, ChuckStation5::Logger::Level::Off);
+  ChuckStation5::RuntimeEvents::Init();
   Init(dir, 64);
 }
 static void Teardown() {
   Shutdown();
-  PS5x::RuntimeEvents::Shutdown();
-  PS5x::Logger::Shutdown();
+  ChuckStation5::RuntimeEvents::Shutdown();
+  ChuckStation5::Logger::Shutdown();
 }
 
 // ── Name ─────────────────────────────────────────────────────────────────
@@ -217,7 +217,7 @@ TEST_CASE("ShaderCache – GetStats and DumpStats don't crash", "[sc]") {
 
 // ── Disk persistence ──────────────────────────────────────────────────────
 TEST_CASE("ShaderCache – SaveToDisk / LoadFromDisk roundtrip", "[sc]") {
-  auto dir = fs::temp_directory_path() / "ps5x_sc_test";
+  auto dir = fs::temp_directory_path() / "chuckstation5_sc_test";
   fs::create_directories(dir);
   auto cachePath = dir / "shadercache.bin";
 

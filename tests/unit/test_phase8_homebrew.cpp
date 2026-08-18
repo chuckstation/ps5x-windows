@@ -1,21 +1,20 @@
-// PS5x – Phase 8 Homebrew Validation Suite
+// ChuckStation5 – Homebrew Validation Suite
 // SPDX-License-Identifier: MIT
-//
 // Regression corpus for simple homebrew scenarios:
 //   Hello World, Console logging, File I/O, Graphics, Audio,
 //   Input, Threading, Memory allocation.
 // All tests use synthesised programs — no real ELF required.
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Cpu/Cpu.h"
-#include "PS5x/Syscalls/Syscalls.h"
-#include "PS5x/Memory/Memory.h"
-#include "PS5x/Audio/Audio.h"
-#include "PS5x/Input/Input.h"
-#include "PS5x/Filesystem/Filesystem.h"
-#include "PS5x/GPU/GPU.h"
-#include "PS5x/CommandProcessor/CommandProcessor.h"
-#include "PS5x/RuntimeEvents/RuntimeEvents.h"
-#include "PS5x/Logger/Logger.h"
+#include "ChuckStation5/Cpu/Cpu.h"
+#include "ChuckStation5/Syscalls/Syscalls.h"
+#include "ChuckStation5/Memory/Memory.h"
+#include "ChuckStation5/Audio/Audio.h"
+#include "ChuckStation5/Input/Input.h"
+#include "ChuckStation5/Filesystem/Filesystem.h"
+#include "ChuckStation5/GPU/GPU.h"
+#include "ChuckStation5/CommandProcessor/CommandProcessor.h"
+#include "ChuckStation5/RuntimeEvents/RuntimeEvents.h"
+#include "ChuckStation5/Logger/Logger.h"
 
 #include <array>
 #include <cstring>
@@ -23,8 +22,8 @@
 #include <chrono>
 #include <vector>
 
-using namespace PS5x;
-using namespace PS5x::CommandProcessor;
+using namespace ChuckStation5;
+using namespace ChuckStation5::CommandProcessor;
 
 // ── Helper: build and run a tiny x86-64 program ───────────────────────────
 
@@ -97,7 +96,7 @@ struct HomebrewRun {
 
 // ── Hello World ───────────────────────────────────────────────────────────
 
-TEST_CASE("Phase8::Homebrew::HelloWorld::ExitsCleanly", "[homebrew][phase8]")
+TEST_CASE("Homebrew::HelloWorld::ExitsCleanly", "[homebrew]")
 {
     HomebrewRun hw;
     auto code = HomebrewRun::MakeSyscallProgram(Syscalls::Nr::Exit, 0);
@@ -106,7 +105,7 @@ TEST_CASE("Phase8::Homebrew::HelloWorld::ExitsCleanly", "[homebrew][phase8]")
     CHECK(hw.exitCode == 0);
 }
 
-TEST_CASE("Phase8::Homebrew::HelloWorld::NonZeroExitCode", "[homebrew][phase8]")
+TEST_CASE("Homebrew::HelloWorld::NonZeroExitCode", "[homebrew]")
 {
     HomebrewRun hw;
     auto code = HomebrewRun::MakeSyscallProgram(Syscalls::Nr::Exit, 42);
@@ -115,7 +114,7 @@ TEST_CASE("Phase8::Homebrew::HelloWorld::NonZeroExitCode", "[homebrew][phase8]")
     CHECK(hw.exitCode == 42);
 }
 
-TEST_CASE("Phase8::Homebrew::HelloWorld::ExitGroup", "[homebrew][phase8]")
+TEST_CASE("Homebrew::HelloWorld::ExitGroup", "[homebrew]")
 {
     HomebrewRun hw;
     auto code = HomebrewRun::MakeSyscallProgram(Syscalls::Nr::ExitGrp, 0);
@@ -126,7 +125,7 @@ TEST_CASE("Phase8::Homebrew::HelloWorld::ExitGroup", "[homebrew][phase8]")
 
 // ── Console Logging ───────────────────────────────────────────────────────
 
-TEST_CASE("Phase8::Homebrew::ConsoleLog::WriteSyscallSucceeds", "[homebrew][phase8]")
+TEST_CASE("Homebrew::ConsoleLog::WriteSyscallSucceeds", "[homebrew]")
 {
     Cpu::Init();
     Syscalls::Init();
@@ -148,7 +147,7 @@ TEST_CASE("Phase8::Homebrew::ConsoleLog::WriteSyscallSucceeds", "[homebrew][phas
     Cpu::Shutdown();
 }
 
-TEST_CASE("Phase8::Homebrew::ConsoleLog::WriteToStderr", "[homebrew][phase8]")
+TEST_CASE("Homebrew::ConsoleLog::WriteToStderr", "[homebrew]")
 {
     Cpu::Init();
     Syscalls::Init();
@@ -169,7 +168,7 @@ TEST_CASE("Phase8::Homebrew::ConsoleLog::WriteToStderr", "[homebrew][phase8]")
     Cpu::Shutdown();
 }
 
-TEST_CASE("Phase8::Homebrew::ConsoleLog::WriteBadFdReturnsError", "[homebrew][phase8]")
+TEST_CASE("Homebrew::ConsoleLog::WriteBadFdReturnsError", "[homebrew]")
 {
     Cpu::Init();
     Syscalls::Init();
@@ -191,14 +190,14 @@ TEST_CASE("Phase8::Homebrew::ConsoleLog::WriteBadFdReturnsError", "[homebrew][ph
 
 // ── File I/O ─────────────────────────────────────────────────────────────
 
-TEST_CASE("Phase8::Homebrew::FileIO::FilesystemInit", "[homebrew][phase8]")
+TEST_CASE("Homebrew::FileIO::FilesystemInit", "[homebrew]")
 {
     Filesystem::Init();
     CHECK(true);
     Filesystem::Shutdown();
 }
 
-TEST_CASE("Phase8::Homebrew::FileIO::MountUnmount", "[homebrew][phase8]")
+TEST_CASE("Homebrew::FileIO::MountUnmount", "[homebrew]")
 {
     Filesystem::Init();
     // Mount a temp path to /app0
@@ -209,7 +208,7 @@ TEST_CASE("Phase8::Homebrew::FileIO::MountUnmount", "[homebrew][phase8]")
     Filesystem::Shutdown();
 }
 
-TEST_CASE("Phase8::Homebrew::FileIO::PathResolution", "[homebrew][phase8]")
+TEST_CASE("Homebrew::FileIO::PathResolution", "[homebrew]")
 {
     Filesystem::Init();
     Filesystem::Mount(Filesystem::MountPoint::App0,
@@ -221,19 +220,17 @@ TEST_CASE("Phase8::Homebrew::FileIO::PathResolution", "[homebrew][phase8]")
     Filesystem::Shutdown();
 }
 
-TEST_CASE("Phase8::Homebrew::FileIO::UnmountedPathEmpty", "[homebrew][phase8]")
+TEST_CASE("Homebrew::FileIO::UnmountedPathEmpty", "[homebrew]")
 {
     Filesystem::Init();
     auto resolved = Filesystem::Resolve("/app0/missing.bin");
-    // /app0 not mounted — resolved may be empty or indicate unmounted
-    // We just verify it doesn't crash
     CHECK(true);
     Filesystem::Shutdown();
 }
 
 // ── Graphics demo ─────────────────────────────────────────────────────────
 
-TEST_CASE("Phase8::Homebrew::Graphics::TriangleDemo", "[homebrew][phase8]")
+TEST_CASE("Homebrew::Graphics::TriangleDemo", "[homebrew]")
 {
     GPU::Init(nullptr);
     CommandProcessor::Init(nullptr);
@@ -255,7 +252,7 @@ TEST_CASE("Phase8::Homebrew::Graphics::TriangleDemo", "[homebrew][phase8]")
     GPU::Shutdown();
 }
 
-TEST_CASE("Phase8::Homebrew::Graphics::QuadDemo", "[homebrew][phase8]")
+TEST_CASE("Homebrew::Graphics::QuadDemo", "[homebrew]")
 {
     GPU::Init(nullptr);
     CommandProcessor::Init(nullptr);
@@ -276,14 +273,14 @@ TEST_CASE("Phase8::Homebrew::Graphics::QuadDemo", "[homebrew][phase8]")
 
 // ── Audio demo ────────────────────────────────────────────────────────────
 
-TEST_CASE("Phase8::Homebrew::Audio::InitShutdown", "[homebrew][phase8]")
+TEST_CASE("Homebrew::Audio::InitShutdown", "[homebrew]")
 {
     Audio::AudioConfig acfg{};
     CHECK(Audio::Init(acfg));
     Audio::Shutdown();
 }
 
-TEST_CASE("Phase8::Homebrew::Audio::PortOpenClose", "[homebrew][phase8]")
+TEST_CASE("Homebrew::Audio::PortOpenClose", "[homebrew]")
 {
     Audio::AudioConfig acfg{};
     Audio::Init(acfg);
@@ -299,7 +296,7 @@ TEST_CASE("Phase8::Homebrew::Audio::PortOpenClose", "[homebrew][phase8]")
     Audio::Shutdown();
 }
 
-TEST_CASE("Phase8::Homebrew::Audio::OutputSilence", "[homebrew][phase8]")
+TEST_CASE("Homebrew::Audio::OutputSilence", "[homebrew]")
 {
     Audio::AudioConfig acfg{};
     Audio::Init(acfg);
@@ -319,13 +316,13 @@ TEST_CASE("Phase8::Homebrew::Audio::OutputSilence", "[homebrew][phase8]")
 
 // ── Input demo ────────────────────────────────────────────────────────────
 
-TEST_CASE("Phase8::Homebrew::Input::InitShutdown", "[homebrew][phase8]")
+TEST_CASE("Homebrew::Input::InitShutdown", "[homebrew]")
 {
     Input::Init();
     Input::Shutdown();
 }
 
-TEST_CASE("Phase8::Homebrew::Input::PollReturnsState", "[homebrew][phase8]")
+TEST_CASE("Homebrew::Input::PollReturnsState", "[homebrew]")
 {
     Input::Init();
     Input::PadState state{};
@@ -335,7 +332,7 @@ TEST_CASE("Phase8::Homebrew::Input::PollReturnsState", "[homebrew][phase8]")
     Input::Shutdown();
 }
 
-TEST_CASE("Phase8::Homebrew::Input::RecordingAndPlayback", "[homebrew][phase8]")
+TEST_CASE("Homebrew::Input::RecordingAndPlayback", "[homebrew]")
 {
     Input::Init();
     Input::StartRecording();
@@ -355,7 +352,7 @@ TEST_CASE("Phase8::Homebrew::Input::RecordingAndPlayback", "[homebrew][phase8]")
 
 // ── Threading demo ────────────────────────────────────────────────────────
 
-TEST_CASE("Phase8::Homebrew::Threading::GetTidReturnsPositive", "[homebrew][phase8]")
+TEST_CASE("Homebrew::Threading::GetTidReturnsPositive", "[homebrew]")
 {
     Cpu::Init();
     Syscalls::Init();
@@ -371,7 +368,7 @@ TEST_CASE("Phase8::Homebrew::Threading::GetTidReturnsPositive", "[homebrew][phas
     Cpu::Shutdown();
 }
 
-TEST_CASE("Phase8::Homebrew::Threading::SchedYieldSucceeds", "[homebrew][phase8]")
+TEST_CASE("Homebrew::Threading::SchedYieldSucceeds", "[homebrew]")
 {
     Cpu::Init();
     Syscalls::Init();
@@ -386,7 +383,7 @@ TEST_CASE("Phase8::Homebrew::Threading::SchedYieldSucceeds", "[homebrew][phase8]
     Cpu::Shutdown();
 }
 
-TEST_CASE("Phase8::Homebrew::Threading::ClockGettimeReturnsPositive", "[homebrew][phase8]")
+TEST_CASE("Homebrew::Threading::ClockGettimeReturnsPositive", "[homebrew]")
 {
     Cpu::Init();
     Syscalls::Init();
@@ -402,7 +399,9 @@ TEST_CASE("Phase8::Homebrew::Threading::ClockGettimeReturnsPositive", "[homebrew
 
     uint64_t sec{};
     std::memcpy(&sec, ts_buf, 8);
-    CHECK(sec >= 0); // some positive timestamp
+    // sec is uint64_t, so sec >= 0 is always true; checking valid memory conversion was performed
+    (void)sec;
+    CHECK(true);
 
     Syscalls::Shutdown();
     Cpu::Shutdown();
@@ -410,7 +409,7 @@ TEST_CASE("Phase8::Homebrew::Threading::ClockGettimeReturnsPositive", "[homebrew
 
 // ── Memory allocation demo ────────────────────────────────────────────────
 
-TEST_CASE("Phase8::Homebrew::MemAlloc::AllocAndFreeStack", "[homebrew][phase8]")
+TEST_CASE("Homebrew::MemAlloc::AllocAndFreeStack", "[homebrew]")
 {
     Memory::Init();
     constexpr size_t SZ = 64 * 1024; // 64 KB stack
@@ -422,7 +421,7 @@ TEST_CASE("Phase8::Homebrew::MemAlloc::AllocAndFreeStack", "[homebrew][phase8]")
     Memory::Shutdown();
 }
 
-TEST_CASE("Phase8::Homebrew::MemAlloc::AllocHeapAndFill", "[homebrew][phase8]")
+TEST_CASE("Homebrew::MemAlloc::AllocHeapAndFill", "[homebrew]")
 {
     Memory::Init();
     constexpr size_t SZ = 4 * 1024; // 4 KB
@@ -435,7 +434,7 @@ TEST_CASE("Phase8::Homebrew::MemAlloc::AllocHeapAndFill", "[homebrew][phase8]")
     Memory::Shutdown();
 }
 
-TEST_CASE("Phase8::Homebrew::MemAlloc::BrkStubReturnsArg", "[homebrew][phase8]")
+TEST_CASE("Homebrew::MemAlloc::BrkStubReturnsArg", "[homebrew]")
 {
     Cpu::Init();
     Syscalls::Init();
@@ -453,7 +452,7 @@ TEST_CASE("Phase8::Homebrew::MemAlloc::BrkStubReturnsArg", "[homebrew][phase8]")
 
 // ── Full integration: exit program + stats ────────────────────────────────
 
-TEST_CASE("Phase8::Homebrew::Integration::ExitProgramStats", "[homebrew][phase8]")
+TEST_CASE("Homebrew::Integration::ExitProgramStats", "[homebrew]")
 {
     HomebrewRun hw;
     auto code = HomebrewRun::MakeSyscallProgram(Syscalls::Nr::Exit, 0);

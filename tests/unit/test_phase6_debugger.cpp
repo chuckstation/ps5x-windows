@@ -1,9 +1,9 @@
-// PS5x – Phase 6 Debugger tests (conditional BPs, watches, symbol browser, events)
+// ChuckStation5 – Phase 6 Debugger tests (conditional BPs, watches, symbol browser, events)
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Debugger/Debugger.h"
+#include "ChuckStation5/Debugger/Debugger.h"
 
-using namespace PS5x::Debugger;
+using namespace ChuckStation5::Debugger;
 
 // ── Conditional breakpoint tests ───────────────────────────────────────────
 

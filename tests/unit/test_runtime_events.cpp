@@ -1,25 +1,25 @@
-// PS5x – Runtime Events tests (Phase 5)
+// ChuckStation5 – Runtime Events tests (Phase 5)
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/matchers/catch_matchers_floating_point.hpp>
-#include "PS5x/Logger/Logger.h"
-#include "PS5x/RuntimeEvents/RuntimeEvents.h"
+#include "ChuckStation5/Logger/Logger.h"
+#include "ChuckStation5/RuntimeEvents/RuntimeEvents.h"
 
 #include <atomic>
 #include <chrono>
 #include <thread>
 
-using namespace PS5x::RuntimeEvents;
+using namespace ChuckStation5::RuntimeEvents;
 
 static void Setup()
 {
-    PS5x::Logger::Init("", false, PS5x::Logger::Level::Off);
+    ChuckStation5::Logger::Init("", false, ChuckStation5::Logger::Level::Off);
     Init(1024);
 }
 static void Teardown()
 {
     Shutdown();
-    PS5x::Logger::Shutdown();
+    ChuckStation5::Logger::Shutdown();
 }
 
 TEST_CASE("Events – EventTypeName coverage", "[events]")

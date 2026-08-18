@@ -1,25 +1,25 @@
-// PS5x – Execution Framework tests (Phase 4)
+// ChuckStation5 – Execution Framework tests (Phase 4)
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Logger/Logger.h"
-#include "PS5x/Memory/Memory.h"
-#include "PS5x/KernelRuntime/KernelRuntime.h"
-#include "PS5x/Filesystem/Filesystem.h"
-#include "PS5x/Loader/Loader.h"
-#include "PS5x/Process/Process.h"
-#include "PS5x/Debugger/Debugger.h"
-#include "PS5x/Execution/Execution.h"
+#include "ChuckStation5/Logger/Logger.h"
+#include "ChuckStation5/Memory/Memory.h"
+#include "ChuckStation5/KernelRuntime/KernelRuntime.h"
+#include "ChuckStation5/Filesystem/Filesystem.h"
+#include "ChuckStation5/Loader/Loader.h"
+#include "ChuckStation5/Process/Process.h"
+#include "ChuckStation5/Debugger/Debugger.h"
+#include "ChuckStation5/Execution/Execution.h"
 
 #include <filesystem>
 #include <fstream>
 #include <atomic>
 
 namespace fs = std::filesystem;
-using namespace PS5x::Execution;
+using namespace ChuckStation5::Execution;
 
 static fs::path WriteTinyElf()
 {
-    auto path = fs::temp_directory_path() / "ps5x_exec_test.elf";
+    auto path = fs::temp_directory_path() / "chuckstation5_exec_test.elf";
 #pragma pack(push,1)
     struct Ehdr {
         uint8_t e_ident[16]; uint16_t e_type,e_machine; uint32_t e_version;
@@ -48,25 +48,25 @@ static fs::path WriteTinyElf()
 
 static void Setup()
 {
-    PS5x::Logger::Init("", false, PS5x::Logger::Level::Off);
-    PS5x::Memory::Init();
-    PS5x::KernelRuntime::Init();
-    PS5x::Filesystem::Init();
-    PS5x::Loader::Init();
-    PS5x::Process::Init();
-    PS5x::Debugger::Init();
+    ChuckStation5::Logger::Init("", false, ChuckStation5::Logger::Level::Off);
+    ChuckStation5::Memory::Init();
+    ChuckStation5::KernelRuntime::Init();
+    ChuckStation5::Filesystem::Init();
+    ChuckStation5::Loader::Init();
+    ChuckStation5::Process::Init();
+    ChuckStation5::Debugger::Init();
     Init();
 }
 static void Teardown()
 {
     Shutdown();
-    PS5x::Debugger::Shutdown();
-    PS5x::Process::Shutdown();
-    PS5x::Loader::Shutdown();
-    PS5x::Filesystem::Shutdown();
-    PS5x::KernelRuntime::Shutdown();
-    PS5x::Memory::Shutdown();
-    PS5x::Logger::Shutdown();
+    ChuckStation5::Debugger::Shutdown();
+    ChuckStation5::Process::Shutdown();
+    ChuckStation5::Loader::Shutdown();
+    ChuckStation5::Filesystem::Shutdown();
+    ChuckStation5::KernelRuntime::Shutdown();
+    ChuckStation5::Memory::Shutdown();
+    ChuckStation5::Logger::Shutdown();
 }
 
 TEST_CASE("Execution – ExecStateName coverage", "[exec]")
@@ -98,7 +98,7 @@ TEST_CASE("Execution – LoadProgram transitions to Ready", "[exec]")
 {
     Setup();
     auto elfPath = WriteTinyElf();
-    auto content = fs::temp_directory_path() / "ps5x_exec_content";
+    auto content = fs::temp_directory_path() / "chuckstation5_exec_content";
     fs::create_directories(content);
 
     LoadOptions opts;
@@ -126,7 +126,7 @@ TEST_CASE("Execution – Start after LoadProgram → Running", "[exec]")
 {
     Setup();
     auto elfPath = WriteTinyElf();
-    auto content = fs::temp_directory_path() / "ps5x_exec_start";
+    auto content = fs::temp_directory_path() / "chuckstation5_exec_start";
     fs::create_directories(content);
 
     REQUIRE(LoadProgram(elfPath, {.contentPath=content}));
@@ -146,7 +146,7 @@ TEST_CASE("Execution – StateChange callback fires", "[exec]")
     OnStateChange([&](ExecState, ExecState){ changes.fetch_add(1); });
 
     auto elfPath = WriteTinyElf();
-    auto content = fs::temp_directory_path() / "ps5x_exec_cb";
+    auto content = fs::temp_directory_path() / "chuckstation5_exec_cb";
     fs::create_directories(content);
     LoadProgram(elfPath, {.contentPath=content});
 
@@ -161,7 +161,7 @@ TEST_CASE("Execution – GetStats returns valid data after load", "[exec]")
 {
     Setup();
     auto elfPath = WriteTinyElf();
-    auto content = fs::temp_directory_path() / "ps5x_exec_stats";
+    auto content = fs::temp_directory_path() / "chuckstation5_exec_stats";
     fs::create_directories(content);
 
     LoadProgram(elfPath, {.contentPath=content});
@@ -179,7 +179,7 @@ TEST_CASE("Execution – NotifyFrameRendered increments counter", "[exec]")
 {
     Setup();
     auto elfPath = WriteTinyElf();
-    auto content = fs::temp_directory_path() / "ps5x_exec_frames";
+    auto content = fs::temp_directory_path() / "chuckstation5_exec_frames";
     fs::create_directories(content);
 
     LoadProgram(elfPath, {.contentPath=content});
@@ -198,7 +198,7 @@ TEST_CASE("Execution – NotifySyscall increments counter", "[exec]")
 {
     Setup();
     auto elfPath = WriteTinyElf();
-    auto content = fs::temp_directory_path() / "ps5x_exec_syscall";
+    auto content = fs::temp_directory_path() / "chuckstation5_exec_syscall";
     fs::create_directories(content);
 
     LoadProgram(elfPath, {.contentPath=content});
@@ -215,7 +215,7 @@ TEST_CASE("Execution – Pause and Resume toggle state", "[exec]")
 {
     Setup();
     auto elfPath = WriteTinyElf();
-    auto content = fs::temp_directory_path() / "ps5x_exec_pause";
+    auto content = fs::temp_directory_path() / "chuckstation5_exec_pause";
     fs::create_directories(content);
 
     LoadProgram(elfPath, {.contentPath=content});

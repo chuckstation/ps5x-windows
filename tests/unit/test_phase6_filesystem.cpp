@@ -1,11 +1,11 @@
-// PS5x – Phase 6 Filesystem tests (tracing, temp FS, read-only query)
+// ChuckStation5 – Phase 6 Filesystem tests (tracing, temp FS, read-only query)
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Filesystem/Filesystem.h"
+#include "ChuckStation5/Filesystem/Filesystem.h"
 #include <chrono>
 #include <thread>
 
-using namespace PS5x::Filesystem;
+using namespace ChuckStation5::Filesystem;
 
 // ── Tracing tests ──────────────────────────────────────────────────────────
 

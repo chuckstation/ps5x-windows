@@ -1,11 +1,11 @@
-// PS5x – Phase 7 Syscall Dispatcher tests
+// ChuckStation5 – Phase 7 Syscall Dispatcher tests
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Syscalls/Syscalls.h"
-#include "PS5x/Cpu/Cpu.h"
+#include "ChuckStation5/Syscalls/Syscalls.h"
+#include "ChuckStation5/Cpu/Cpu.h"
 
-using namespace PS5x::Syscalls;
-namespace Cpu = PS5x::Cpu;
+using namespace ChuckStation5::Syscalls;
+namespace Cpu = ChuckStation5::Cpu;
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 

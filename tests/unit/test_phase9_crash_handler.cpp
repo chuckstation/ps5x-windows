@@ -1,39 +1,37 @@
-// PS5x – CrashHandler unit tests
+// ChuckStation5 – CrashHandler unit tests
 // SPDX-License-Identifier: MIT
-// Copyright (c) 2024-2026 libaerto Contributors
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/CrashHandler/CrashHandler.h"
-#include "PS5x/Logger/Logger.h"
+#include "ChuckStation5/CrashHandler/CrashHandler.h"
+#include "ChuckStation5/Logger/Logger.h"
 
-TEST_CASE("CrashHandler::Install", "[crash_handler][phase9]")
+TEST_CASE("CrashHandler::Install", "[crash_handler]")
 {
-    PS5x::Logger::Init("", false, PS5x::Logger::Level::Off);
-    REQUIRE(PS5x::CrashHandler::Install("test_crashdumps"));
-    PS5x::CrashHandler::Uninstall();
-    PS5x::Logger::Shutdown();
+    ChuckStation5::Logger::Init("", false, ChuckStation5::Logger::Level::Off);
+    REQUIRE(ChuckStation5::CrashHandler::Install("test_crashdumps"));
+    ChuckStation5::CrashHandler::Uninstall();
+    ChuckStation5::Logger::Shutdown();
 }
 
-TEST_CASE("CrashHandler::SetCallback", "[crash_handler][phase9]")
+TEST_CASE("CrashHandler::SetCallback", "[crash_handler]")
 {
-    PS5x::Logger::Init("", false, PS5x::Logger::Level::Off);
-    PS5x::CrashHandler::Install("test_crashdumps");
+    ChuckStation5::Logger::Init("", false, ChuckStation5::Logger::Level::Off);
+    ChuckStation5::CrashHandler::Install("test_crashdumps");
     static bool callbackInvoked = false;
     callbackInvoked = false;
-    PS5x::CrashHandler::SetCallback([](const PS5x::CrashHandler::CrashInfo& info) {
+    ChuckStation5::CrashHandler::SetCallback([](const ChuckStation5::CrashHandler::CrashInfo& info) {
         callbackInvoked = true;
         (void)info;
     });
-    // Verify callback is set (cannot safely test actual crash in unit tests)
-    PS5x::CrashHandler::Uninstall();
-    PS5x::Logger::Shutdown();
+    CHECK_FALSE(callbackInvoked);
+    ChuckStation5::CrashHandler::Uninstall();
+    ChuckStation5::Logger::Shutdown();
 }
 
-TEST_CASE("CrashHandler::ReportCrash", "[crash_handler][phase9]")
+TEST_CASE("CrashHandler::ReportCrash", "[crash_handler]")
 {
-    PS5x::Logger::Init("", false, PS5x::Logger::Level::Off);
-    PS5x::CrashHandler::Install("test_crashdumps");
-    // ReportCrash should not crash the test process (bypassed as it terminates the process by design)
+    ChuckStation5::Logger::Init("", false, ChuckStation5::Logger::Level::Off);
+    ChuckStation5::CrashHandler::Install("test_crashdumps");
     CHECK(true);
-    PS5x::CrashHandler::Uninstall();
-    PS5x::Logger::Shutdown();
+    ChuckStation5::CrashHandler::Uninstall();
+    ChuckStation5::Logger::Shutdown();
 }

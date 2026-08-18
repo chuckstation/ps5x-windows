@@ -1,33 +1,33 @@
-// PS5x – Dynamic Linker tests (Phase 5)
+// ChuckStation5 – Dynamic Linker tests (Phase 5)
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Logger/Logger.h"
-#include "PS5x/Memory/Memory.h"
-#include "PS5x/Loader/Loader.h"
-#include "PS5x/ModuleRegistry/ModuleRegistry.h"
-#include "PS5x/RuntimeEvents/RuntimeEvents.h"
-#include "PS5x/DynamicLinker/DynamicLinker.h"
+#include "ChuckStation5/Logger/Logger.h"
+#include "ChuckStation5/Memory/Memory.h"
+#include "ChuckStation5/Loader/Loader.h"
+#include "ChuckStation5/ModuleRegistry/ModuleRegistry.h"
+#include "ChuckStation5/RuntimeEvents/RuntimeEvents.h"
+#include "ChuckStation5/DynamicLinker/DynamicLinker.h"
 
-using namespace PS5x::DynamicLinker;
-using namespace PS5x::ModuleRegistry;
+using namespace ChuckStation5::DynamicLinker;
+using namespace ChuckStation5::ModuleRegistry;
 
 static void Setup()
 {
-    PS5x::Logger::Init("", false, PS5x::Logger::Level::Off);
-    PS5x::Memory::Init();
-    PS5x::Loader::Init();
-    PS5x::RuntimeEvents::Init();
-    PS5x::ModuleRegistry::Init();
-    PS5x::DynamicLinker::Init();
+    ChuckStation5::Logger::Init("", false, ChuckStation5::Logger::Level::Off);
+    ChuckStation5::Memory::Init();
+    ChuckStation5::Loader::Init();
+    ChuckStation5::RuntimeEvents::Init();
+    ChuckStation5::ModuleRegistry::Init();
+    ChuckStation5::DynamicLinker::Init();
 }
 static void Teardown()
 {
-    PS5x::DynamicLinker::Shutdown();
-    PS5x::ModuleRegistry::Shutdown();
-    PS5x::RuntimeEvents::Shutdown();
-    PS5x::Loader::Shutdown();
-    PS5x::Memory::Shutdown();
-    PS5x::Logger::Shutdown();
+    ChuckStation5::DynamicLinker::Shutdown();
+    ChuckStation5::ModuleRegistry::Shutdown();
+    ChuckStation5::RuntimeEvents::Shutdown();
+    ChuckStation5::Loader::Shutdown();
+    ChuckStation5::Memory::Shutdown();
+    ChuckStation5::Logger::Shutdown();
 }
 
 // ── RelocTypeName ─────────────────────────────────────────────────────────
@@ -54,8 +54,8 @@ TEST_CASE("DynLink – Symbol resolves from ModuleRegistry and is cached", "[dyn
 {
     Setup();
     // Register a module with an exported symbol
-    PS5x::Loader::ExecutableInfo info;
-    PS5x::Loader::Symbol sym;
+    ChuckStation5::Loader::ExecutableInfo info;
+    ChuckStation5::Loader::Symbol sym;
     sym.name="sceKernelOpen"; sym.value=0xABCD; sym.size=64; sym.type=2;
     info.symbols.push_back(sym);
     info.imageBase = 0; info.loaded = false;
@@ -76,9 +76,9 @@ TEST_CASE("DynLink – Symbol resolves from ModuleRegistry and is cached", "[dyn
 TEST_CASE("DynLink – LookupSymbolIn scoped to module", "[dynlink]")
 {
     Setup();
-    PS5x::Loader::ExecutableInfo infoA, infoB;
-    PS5x::Loader::Symbol sA; sA.name="foo"; sA.value=0x1000; sA.size=8; sA.type=2;
-    PS5x::Loader::Symbol sB; sB.name="foo"; sB.value=0x2000; sB.size=8; sB.type=2;
+    ChuckStation5::Loader::ExecutableInfo infoA, infoB;
+    ChuckStation5::Loader::Symbol sA; sA.name="foo"; sA.value=0x1000; sA.size=8; sA.type=2;
+    ChuckStation5::Loader::Symbol sB; sB.name="foo"; sB.value=0x2000; sB.size=8; sB.type=2;
     infoA.symbols.push_back(sA);
     infoB.symbols.push_back(sB);
     infoA.imageBase=0; infoA.loaded=false;
@@ -98,8 +98,8 @@ TEST_CASE("DynLink – LookupSymbolIn scoped to module", "[dynlink]")
 TEST_CASE("DynLink – InvalidateCache removes entries for module", "[dynlink]")
 {
     Setup();
-    PS5x::Loader::ExecutableInfo info;
-    PS5x::Loader::Symbol sym; sym.name="bar"; sym.value=0x5000; sym.type=2;
+    ChuckStation5::Loader::ExecutableInfo info;
+    ChuckStation5::Loader::Symbol sym; sym.name="bar"; sym.value=0x5000; sym.type=2;
     info.symbols.push_back(sym);
     info.loaded=false;
     auto id = Register("libbar", "/libbar", info);
@@ -119,8 +119,8 @@ TEST_CASE("DynLink – InvalidateCache removes entries for module", "[dynlink]")
 TEST_CASE("DynLink – ClearCache empties everything", "[dynlink]")
 {
     Setup();
-    PS5x::Loader::ExecutableInfo info;
-    PS5x::Loader::Symbol sym; sym.name="baz"; sym.value=0x9000; sym.type=2;
+    ChuckStation5::Loader::ExecutableInfo info;
+    ChuckStation5::Loader::Symbol sym; sym.name="baz"; sym.value=0x9000; sym.type=2;
     info.symbols.push_back(sym);
     info.loaded=false;
     Register("libbaz","/libbaz",info);
@@ -135,7 +135,7 @@ TEST_CASE("DynLink – ClearCache empties everything", "[dynlink]")
 TEST_CASE("DynLink – No cycles in simple chain", "[dynlink]")
 {
     Setup();
-    PS5x::Loader::ExecutableInfo info;
+    ChuckStation5::Loader::ExecutableInfo info;
     info.loaded=false;
     Register("A","/A",info);
     Register("B","/B",info);
@@ -147,7 +147,7 @@ TEST_CASE("DynLink – No cycles in simple chain", "[dynlink]")
 TEST_CASE("DynLink – TopologicalOrder returns all modules", "[dynlink]")
 {
     Setup();
-    PS5x::Loader::ExecutableInfo info;
+    ChuckStation5::Loader::ExecutableInfo info;
     info.loaded=false;
     Register("X","/X",info);
     Register("Y","/Y",info);
@@ -160,7 +160,7 @@ TEST_CASE("DynLink – TopologicalOrder returns all modules", "[dynlink]")
 TEST_CASE("DynLink – CanUnload returns true when no dependents", "[dynlink]")
 {
     Setup();
-    PS5x::Loader::ExecutableInfo info; info.loaded=false;
+    ChuckStation5::Loader::ExecutableInfo info; info.loaded=false;
     auto id = Register("standalone","/standalone",info);
     REQUIRE(CanUnload(id));
     Teardown();
@@ -179,7 +179,7 @@ TEST_CASE("DynLink – LinkAll with no modules returns zero", "[dynlink]")
 TEST_CASE("DynLink – DumpRelocations and DumpSymbolCache don't crash", "[dynlink]")
 {
     Setup();
-    PS5x::Loader::ExecutableInfo info; info.loaded=false;
+    ChuckStation5::Loader::ExecutableInfo info; info.loaded=false;
     auto id = Register("dump-test","/dump",info);
     DumpRelocations(id);
     DumpSymbolCache();
@@ -195,8 +195,8 @@ TEST_CASE("DynLink – GetStats reflects cache operations", "[dynlink]")
     REQUIRE(s0.cacheHits   == 0);
     REQUIRE(s0.cacheMisses == 0);
 
-    PS5x::Loader::ExecutableInfo info; info.loaded=false;
-    PS5x::Loader::Symbol sym; sym.name="fn"; sym.value=0x100; sym.type=2;
+    ChuckStation5::Loader::ExecutableInfo info; info.loaded=false;
+    ChuckStation5::Loader::Symbol sym; sym.name="fn"; sym.value=0x100; sym.type=2;
     info.symbols.push_back(sym);
     Register("lib","/lib",info);
 
@@ -213,7 +213,7 @@ TEST_CASE("DynLink – GetStats reflects cache operations", "[dynlink]")
 TEST_CASE("DynLink – EagerBind with no jump-slot relocs returns 0", "[dynlink]")
 {
     Setup();
-    PS5x::Loader::ExecutableInfo info; info.loaded=false;
+    ChuckStation5::Loader::ExecutableInfo info; info.loaded=false;
     auto id = Register("eager","/eager",info);
     REQUIRE(EagerBind(id) == 0);
     REQUIRE(LazyCount()   == 0);

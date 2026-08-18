@@ -1,10 +1,10 @@
-// PS5x – Phase 7 CommandProcessor tests
+// ChuckStation5 – Phase 7 CommandProcessor tests
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/CommandProcessor/CommandProcessor.h"
-#include "PS5x/GPU/GPU.h"
+#include "ChuckStation5/CommandProcessor/CommandProcessor.h"
+#include "ChuckStation5/GPU/GPU.h"
 
-using namespace PS5x::CommandProcessor;
+using namespace ChuckStation5::CommandProcessor;
 
 // ── Lifecycle ──────────────────────────────────────────────────────────────
 
@@ -121,7 +121,7 @@ TEST_CASE("Phase7::CmdProc::Builder::ScissorSize", "[cmd_proc][phase7]")
 TEST_CASE("Phase7::CmdProc::Builder::BarrierSize", "[cmd_proc][phase7]")
 {
     CommandList cl;
-    PS5x::GPU::Barrier b{0x1000, PS5x::GPU::ResourceState::Undefined, PS5x::GPU::ResourceState::RenderTarget};
+    ChuckStation5::GPU::Barrier b{0x1000, ChuckStation5::GPU::ResourceState::Undefined, ChuckStation5::GPU::ResourceState::RenderTarget};
     cl.Barrier(b);
     // opcode(4) + gpuAddr(8) + before(4) + after(4) = 20
     CHECK(cl.Size() == 20);
@@ -231,7 +231,7 @@ TEST_CASE("Phase7::CmdProc::Process::BarrierCounted", "[cmd_proc][phase7]")
     Init(nullptr);
     ResetStats();
     CommandList cl;
-    PS5x::GPU::Barrier b{0x2000, PS5x::GPU::ResourceState::Undefined, PS5x::GPU::ResourceState::RenderTarget};
+    ChuckStation5::GPU::Barrier b{0x2000, ChuckStation5::GPU::ResourceState::Undefined, ChuckStation5::GPU::ResourceState::RenderTarget};
     cl.Barrier(b);
     cl.End();
     Process(cl);

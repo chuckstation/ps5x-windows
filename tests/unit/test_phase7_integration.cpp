@@ -1,13 +1,13 @@
-// PS5x – Phase 7 Integration tests
+// ChuckStation5 – Integration tests
 // Simulates a minimal homebrew execution: init → load → run → syscall → exit
 // No real ELF is loaded — we synthesize a tiny x86-64 program in memory.
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Cpu/Cpu.h"
-#include "PS5x/Syscalls/Syscalls.h"
-#include "PS5x/CommandProcessor/CommandProcessor.h"
-#include "PS5x/RuntimeEvents/RuntimeEvents.h"
-#include "PS5x/GPU/GPU.h"
+#include "ChuckStation5/Cpu/Cpu.h"
+#include "ChuckStation5/Syscalls/Syscalls.h"
+#include "ChuckStation5/CommandProcessor/CommandProcessor.h"
+#include "ChuckStation5/RuntimeEvents/RuntimeEvents.h"
+#include "ChuckStation5/GPU/GPU.h"
 
 #include <array>
 #include <thread>
@@ -15,27 +15,33 @@
 #include <cstring>
 #include <vector>
 
-using namespace PS5x;
+using namespace ChuckStation5;
 
 // ── Helper: build a tiny "hello world" x86-64 program ────────────────────
-// Program logic:
-//   mov rax, 60        ; sys_exit number
-//   mov rdi, 0         ; exit code 0
-//   syscall            ; SYSCALL instruction
 static std::vector<uint8_t> MakeExitProgram(int exitCode = 0)
 {
     std::vector<uint8_t> code;
-    // REX.W + MOV rax, imm32 (B8+r with REX: 48 B8 followed by 8-byte imm)
-    // Simpler: use 0x48 0xC7 0xC0 <imm32>  = mov rax, imm32 (sign-extended)
+    code.reserve(16);
     // mov rax, 60
-    code.insert(code.end(), {0x48, 0xC7, 0xC0,
-                              60, 0, 0, 0});        // mov rax, 60
+    code.push_back(0x48);
+    code.push_back(0xC7);
+    code.push_back(0xC0);
+    code.push_back(60);
+    code.push_back(0);
+    code.push_back(0);
+    code.push_back(0);
     // mov rdi, exitCode
-    code.insert(code.end(), {0x48, 0xC7, 0xC7,
-                              static_cast<uint8_t>(exitCode), 0, 0, 0});  // mov rdi, exitCode
+    code.push_back(0x48);
+    code.push_back(0xC7);
+    code.push_back(0xC7);
+    code.push_back(static_cast<uint8_t>(exitCode));
+    code.push_back(0);
+    code.push_back(0);
+    code.push_back(0);
     // SYSCALL
-    code.insert(code.end(), {0x0F, 0x05});
-    // HLT (safety stop if syscall doesn't halt)
+    code.push_back(0x0F);
+    code.push_back(0x05);
+    // HLT
     code.push_back(0xF4);
     return code;
 }
@@ -61,9 +67,9 @@ static Cpu::StepResult RunWithSyscalls(int maxSteps = 100)
     return last;
 }
 
-// ── Tests ─────────────────────────────────────────────────────────────────
+// ── Tests ────────────────────────────────(uint64_t) ─────────────────
 
-TEST_CASE("Phase7::Integration::MinimalExitProgram", "[integration][phase7]")
+TEST_CASE("Integration::MinimalExitProgram", "[integration]")
 {
     // Setup
     Cpu::Init();
@@ -84,7 +90,7 @@ TEST_CASE("Phase7::Integration::MinimalExitProgram", "[integration][phase7]")
     Cpu::SetRip(reinterpret_cast<uint64_t>(code.data()));
 
     // Run
-    auto result = RunWithSyscalls(20);
+    RunWithSyscalls(20);
 
     CHECK(exitCalled);
 
@@ -92,7 +98,7 @@ TEST_CASE("Phase7::Integration::MinimalExitProgram", "[integration][phase7]")
     Cpu::Shutdown();
 }
 
-TEST_CASE("Phase7::Integration::ExitCodePropagated", "[integration][phase7]")
+TEST_CASE("Integration::ExitCodePropagated", "[integration]")
 {
     Cpu::Init();
     Syscalls::Init();
@@ -115,7 +121,7 @@ TEST_CASE("Phase7::Integration::ExitCodePropagated", "[integration][phase7]")
     Cpu::Shutdown();
 }
 
-TEST_CASE("Phase7::Integration::SyscallStatsAfterRun", "[integration][phase7]")
+TEST_CASE("Integration::SyscallStatsAfterRun", "[integration]")
 {
     Cpu::Init();
     Syscalls::Init();
@@ -140,7 +146,7 @@ TEST_CASE("Phase7::Integration::SyscallStatsAfterRun", "[integration][phase7]")
     Cpu::Shutdown();
 }
 
-TEST_CASE("Phase7::Integration::CpuStatsAfterRun", "[integration][phase7]")
+TEST_CASE("Integration::CpuStatsAfterRun", "[integration]")
 {
     Cpu::Init();
     Cpu::ResetStats();
@@ -164,7 +170,7 @@ TEST_CASE("Phase7::Integration::CpuStatsAfterRun", "[integration][phase7]")
     Cpu::Shutdown();
 }
 
-TEST_CASE("Phase7::Integration::NopSlide", "[integration][phase7]")
+TEST_CASE("Integration::NopSlide", "[integration]")
 {
     Cpu::Init();
     Cpu::ResetStats();
@@ -186,7 +192,7 @@ TEST_CASE("Phase7::Integration::NopSlide", "[integration][phase7]")
     Cpu::Shutdown();
 }
 
-TEST_CASE("Phase7::Integration::BreakpointInterruptsRun", "[integration][phase7]")
+TEST_CASE("Integration::BreakpointInterruptsRun", "[integration]")
 {
     Cpu::Init();
     Syscalls::Init();
@@ -212,7 +218,7 @@ TEST_CASE("Phase7::Integration::BreakpointInterruptsRun", "[integration][phase7]
     Syscalls::Shutdown();
 }
 
-TEST_CASE("Phase7::Integration::CommandListAndGpu", "[integration][phase7]")
+TEST_CASE("Integration::CommandListAndGpu", "[integration]")
 {
     CommandProcessor::Init(nullptr);
     CommandProcessor::ResetStats();
@@ -241,7 +247,7 @@ TEST_CASE("Phase7::Integration::CommandListAndGpu", "[integration][phase7]")
     CommandProcessor::Shutdown();
 }
 
-TEST_CASE("Phase7::Integration::RuntimeEventsFromSyscall", "[integration][phase7]")
+TEST_CASE("Integration::RuntimeEventsFromSyscall", "[integration]")
 {
     RuntimeEvents::Init();
     RuntimeEvents::Reset();
@@ -273,18 +279,10 @@ TEST_CASE("Phase7::Integration::RuntimeEventsFromSyscall", "[integration][phase7
     RuntimeEvents::Shutdown();
 }
 
-TEST_CASE("Phase7::Integration::CallStackTracking", "[integration][phase7]")
+TEST_CASE("Integration::CallStackTracking", "[integration]")
 {
     Cpu::Init();
 
-    // Build: CALL target; HLT; target: NOP; RET
-    // Layout (bytes from base):
-    //   [0]  E8 03 00 00 00   CALL +3     (calls to base+8)
-    //   [5]  F4               HLT
-    //   [6]  90               NOP (padding)
-    //   [7]  90               NOP (padding)
-    //   [8]  90               NOP (inside called function)
-    //   [9]  C3               RET
     std::vector<uint8_t> code = {
         0xE8, 0x03, 0x00, 0x00, 0x00,   // CALL rel32 = +3 → lands at offset 8
         0xF4,                             // HLT (after return)

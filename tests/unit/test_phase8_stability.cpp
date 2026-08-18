@@ -1,19 +1,18 @@
-// PS5x – Phase 8 Runtime Stability tests
+// ChuckStation5 – Phase 8 Runtime Stability tests
 // SPDX-License-Identifier: MIT
-//
 // Tests for exception handling, process teardown, resource lifetime,
 // crash recovery diagnostics, and memory leak detection.
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Process/Process.h"
-#include "PS5x/Memory/Memory.h"
-#include "PS5x/MemoryDiag/MemoryDiag.h"
-#include "PS5x/Runtime/Runtime.h"
-#include "PS5x/Cpu/Cpu.h"
-#include "PS5x/Syscalls/Syscalls.h"
-#include "PS5x/KernelRuntime/KernelRuntime.h"
-#include "PS5x/Logger/Logger.h"
+#include "ChuckStation5/Process/Process.h"
+#include "ChuckStation5/Memory/Memory.h"
+#include "ChuckStation5/MemoryDiag/MemoryDiag.h"
+#include "ChuckStation5/Runtime/Runtime.h"
+#include "ChuckStation5/Cpu/Cpu.h"
+#include "ChuckStation5/Syscalls/Syscalls.h"
+#include "ChuckStation5/KernelRuntime/KernelRuntime.h"
+#include "ChuckStation5/Logger/Logger.h"
 
-using namespace PS5x;
+using namespace ChuckStation5;
 
 // ── Process lifecycle stress ───────────────────────────────────────────────
 
@@ -220,28 +219,28 @@ TEST_CASE("Phase8::Stability::KernelRuntime::HandleExhaustion", "[stability][pha
 TEST_CASE("Phase8::Stability::Runtime::SubsystemNameTable", "[stability][phase8]")
 {
     // All valid SubsystemIds should return a non-empty string
-    using SID = PS5x::Runtime::SubsystemId;
+    using SID = ChuckStation5::Runtime::SubsystemId;
     std::vector<SID> ids = {
-        PS5x::Runtime::SubsystemId::Logger, PS5x::Runtime::SubsystemId::Config, PS5x::Runtime::SubsystemId::Memory, PS5x::Runtime::SubsystemId::Kernel,
-        PS5x::Runtime::SubsystemId::Filesystem, PS5x::Runtime::SubsystemId::Loader, PS5x::Runtime::SubsystemId::KytyAdapter,
-        PS5x::Runtime::SubsystemId::Renderer, PS5x::Runtime::SubsystemId::GPU, PS5x::Runtime::SubsystemId::Audio, PS5x::Runtime::SubsystemId::Input,
-        PS5x::Runtime::SubsystemId::Process, PS5x::Runtime::SubsystemId::Debugger, PS5x::Runtime::SubsystemId::UI,
+        ChuckStation5::Runtime::SubsystemId::Logger, ChuckStation5::Runtime::SubsystemId::Config, ChuckStation5::Runtime::SubsystemId::Memory, ChuckStation5::Runtime::SubsystemId::Kernel,
+        ChuckStation5::Runtime::SubsystemId::Filesystem, ChuckStation5::Runtime::SubsystemId::Loader, ChuckStation5::Runtime::SubsystemId::KytyAdapter,
+        ChuckStation5::Runtime::SubsystemId::Renderer, ChuckStation5::Runtime::SubsystemId::GPU, ChuckStation5::Runtime::SubsystemId::Audio, ChuckStation5::Runtime::SubsystemId::Input,
+        ChuckStation5::Runtime::SubsystemId::Process, ChuckStation5::Runtime::SubsystemId::Debugger, ChuckStation5::Runtime::SubsystemId::UI,
     };
     for (auto id : ids) {
-        std::string name = PS5x::Runtime::SubsystemName(id);
+        std::string name = ChuckStation5::Runtime::SubsystemName(id);
         CHECK(!name.empty());
     }
 }
 
 TEST_CASE("Phase8::Stability::Runtime::SubsystemStateNameTable", "[stability][phase8]")
 {
-    using SS = PS5x::Runtime::SubsystemState;
+    using SS = ChuckStation5::Runtime::SubsystemState;
     std::vector<SS> states = {
-        PS5x::Runtime::SubsystemState::Unregistered, PS5x::Runtime::SubsystemState::Registered, PS5x::Runtime::SubsystemState::Initialising,
-        PS5x::Runtime::SubsystemState::Running, PS5x::Runtime::SubsystemState::ShuttingDown, PS5x::Runtime::SubsystemState::Stopped, PS5x::Runtime::SubsystemState::Failed,
+        ChuckStation5::Runtime::SubsystemState::Unregistered, ChuckStation5::Runtime::SubsystemState::Registered, ChuckStation5::Runtime::SubsystemState::Initialising,
+        ChuckStation5::Runtime::SubsystemState::Running, ChuckStation5::Runtime::SubsystemState::ShuttingDown, ChuckStation5::Runtime::SubsystemState::Stopped, ChuckStation5::Runtime::SubsystemState::Failed,
     };
     for (auto s : states) {
-        std::string name = PS5x::Runtime::SubsystemStateName(s);
+        std::string name = ChuckStation5::Runtime::SubsystemStateName(s);
         CHECK(!name.empty());
     }
 }

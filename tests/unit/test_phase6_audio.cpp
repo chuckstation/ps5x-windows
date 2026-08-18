@@ -1,10 +1,10 @@
-// PS5x – Phase 6 Audio tests
+// ChuckStation5 – Phase 6 Audio tests
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
 #include <catch2/catch_approx.hpp>
-#include "PS5x/Audio/Audio.h"
+#include "ChuckStation5/Audio/Audio.h"
 
-using namespace PS5x::Audio;
+using namespace ChuckStation5::Audio;
 
 // ── Stats ──────────────────────────────────────────────────────────────────
 

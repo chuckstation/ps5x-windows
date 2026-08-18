@@ -1,17 +1,16 @@
-// PS5x – Phase 8 UI Polish tests
+// ChuckStation5 – Phase 8 UI Polish tests
 // SPDX-License-Identifier: MIT
-//
 // Validates: welcome screen, recent homebrew list, firmware manager,
 //            theme customisation, dock layout persistence,
 //            searchable log viewer, performance dashboard.
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/UI/UI.h"
-#include "PS5x/Config/Config.h"
-#include "PS5x/Logger/Logger.h"
-#include "PS5x/PerfTools/PerfTools.h"
-#include "PS5x/Cpu/Cpu.h"
+#include "ChuckStation5/UI/UI.h"
+#include "ChuckStation5/Config/Config.h"
+#include "ChuckStation5/Logger/Logger.h"
+#include "ChuckStation5/PerfTools/PerfTools.h"
+#include "ChuckStation5/Cpu/Cpu.h"
 
-using namespace PS5x;
+using namespace ChuckStation5;
 
 // ── Lifecycle ─────────────────────────────────────────────────────────────
 

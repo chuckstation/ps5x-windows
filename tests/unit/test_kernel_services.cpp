@@ -1,30 +1,30 @@
-// PS5x – Kernel Services tests (Phase 4)
+// ChuckStation5 – Kernel Services tests (Phase 4)
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Logger/Logger.h"
-#include "PS5x/Memory/Memory.h"
-#include "PS5x/KernelRuntime/KernelRuntime.h"
-#include "PS5x/KernelServices/KernelServices.h"
+#include "ChuckStation5/Logger/Logger.h"
+#include "ChuckStation5/Memory/Memory.h"
+#include "ChuckStation5/KernelRuntime/KernelRuntime.h"
+#include "ChuckStation5/KernelServices/KernelServices.h"
 
 #include <atomic>
 #include <cstring>
 #include <thread>
 
-using namespace PS5x::KernelServices;
+using namespace ChuckStation5::KernelServices;
 
 static void Setup()
 {
-    PS5x::Logger::Init("",false,PS5x::Logger::Level::Off);
-    PS5x::Memory::Init();
-    PS5x::KernelRuntime::Init();
+    ChuckStation5::Logger::Init("",false,ChuckStation5::Logger::Level::Off);
+    ChuckStation5::Memory::Init();
+    ChuckStation5::KernelRuntime::Init();
     Init();
 }
 static void Teardown()
 {
     Shutdown();
-    PS5x::KernelRuntime::Shutdown();
-    PS5x::Memory::Shutdown();
-    PS5x::Logger::Shutdown();
+    ChuckStation5::KernelRuntime::Shutdown();
+    ChuckStation5::Memory::Shutdown();
+    ChuckStation5::Logger::Shutdown();
 }
 
 // ── Shared memory ──────────────────────────────────────────────────────────
@@ -82,7 +82,7 @@ TEST_CASE("KSvc – CreateMq / SendMsg / RecvMsg", "[ksvc]")
     REQUIRE(h != INVALID_MQ);
     REQUIRE(MqDepth(h) == 0);
 
-    const char* msg = "Hello PS5x";
+    const char* msg = "Hello ChuckStation5";
     REQUIRE(SendMsg(h, msg, std::strlen(msg)+1, 0, 0));
     REQUIRE(MqDepth(h) == 1);
 
@@ -90,7 +90,7 @@ TEST_CASE("KSvc – CreateMq / SendMsg / RecvMsg", "[ksvc]")
     size_t got = 0;
     REQUIRE(RecvMsg(h, buf, sizeof(buf), &got, nullptr, 0));
     REQUIRE(got == std::strlen(msg)+1);
-    REQUIRE(std::string(buf) == "Hello PS5x");
+    REQUIRE(std::string(buf) == "Hello ChuckStation5");
     REQUIRE(MqDepth(h) == 0);
 
     REQUIRE(CloseMq(h));
@@ -197,7 +197,7 @@ TEST_CASE("KSvc – CondVar signal wakes waiter", "[ksvc]")
     std::atomic<bool> ready{false};
     std::atomic<bool> woken{false};
 
-    auto mx = PS5x::KernelRuntime::CreateMutex({}, "cv-mtx");
+    auto mx = ChuckStation5::KernelRuntime::CreateMutex({}, "cv-mtx");
 
     std::thread waiter([&](){
         ready.store(true);
@@ -215,7 +215,7 @@ TEST_CASE("KSvc – CondVar signal wakes waiter", "[ksvc]")
     REQUIRE(woken.load());
 
     REQUIRE(DestroyCondVar(cv));
-    PS5x::KernelRuntime::CloseHandle(mx);
+    ChuckStation5::KernelRuntime::CloseHandle(mx);
     Teardown();
 }
 
@@ -223,11 +223,11 @@ TEST_CASE("KSvc – CondVar timeout returns false", "[ksvc]")
 {
     Setup();
     auto cv = CreateCondVar("timeout-cv");
-    auto mx = PS5x::KernelRuntime::CreateMutex({}, "to-mtx");
+    auto mx = ChuckStation5::KernelRuntime::CreateMutex({}, "to-mtx");
     // 1us timeout – should not be signalled
     REQUIRE(!WaitCondVar(cv, mx, 1));
     DestroyCondVar(cv);
-    PS5x::KernelRuntime::CloseHandle(mx);
+    ChuckStation5::KernelRuntime::CloseHandle(mx);
     Teardown();
 }
 

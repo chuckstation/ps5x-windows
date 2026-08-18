@@ -1,11 +1,11 @@
-// PS5x – Phase 6 RuntimeEvents tests
+// ChuckStation5 – Phase 6 RuntimeEvents tests
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/RuntimeEvents/RuntimeEvents.h"
+#include "ChuckStation5/RuntimeEvents/RuntimeEvents.h"
 #include <thread>
 #include <atomic>
 
-using namespace PS5x::RuntimeEvents;
+using namespace ChuckStation5::RuntimeEvents;
 
 // ── EventCategoryName ──────────────────────────────────────────────────────
 

@@ -1,24 +1,25 @@
-// PS5x – Filesystem unit tests (Phase 2)
+// ChuckStation5 – Filesystem unit tests
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Logger/Logger.h"
-#include "PS5x/Filesystem/Filesystem.h"
+#include "ChuckStation5/Logger/Logger.h"
+#include "ChuckStation5/Filesystem/Filesystem.h"
 
 #include <filesystem>
 #include <fstream>
+#include <cstring>
 
 namespace fs = std::filesystem;
-using namespace PS5x::Filesystem;
+using namespace ChuckStation5::Filesystem;
 
 static fs::path TmpDir(const char* sub)
 {
-    auto d = fs::temp_directory_path() / "ps5x_fs_test" / sub;
+    auto d = fs::temp_directory_path() / "chuckstation5_fs_test" / sub;
     fs::create_directories(d);
     return d;
 }
 
-static void Setup()   { PS5x::Logger::Init("",false,PS5x::Logger::Level::Off); Init(); }
-static void Teardown(){ Shutdown(); PS5x::Logger::Shutdown(); }
+static void Setup()   { ChuckStation5::Logger::Init("",false,ChuckStation5::Logger::Level::Off); Init(); }
+static void Teardown(){ Shutdown(); ChuckStation5::Logger::Shutdown(); }
 
 // ── Mount management ──────────────────────────────────────────────────────
 
@@ -121,16 +122,17 @@ TEST_CASE("FS – Write then Read back", "[fs]")
 
     auto wfd = Open("/savedata/test.sav", OpenFlags::Write | OpenFlags::Create | OpenFlags::Truncate);
     REQUIRE(wfd != INVALID_FD);
-    const char* msg = "PS5xSAVE";
-    REQUIRE(Write(wfd, msg, 8) == 8);
+    const char* msg = "ChuckStation5SAVE";
+    size_t len = std::strlen(msg);
+    REQUIRE(Write(wfd, msg, len) == static_cast<int64_t>(len));
     REQUIRE(Flush(wfd));
     REQUIRE(Close(wfd));
 
     auto rfd = Open("/savedata/test.sav", OpenFlags::Read);
     REQUIRE(rfd != INVALID_FD);
-    char rb[16]{};
-    REQUIRE(Read(rfd, rb, 8) == 8);
-    REQUIRE(std::string(rb, 8) == "PS5xSAVE");
+    char rb[32]{};
+    REQUIRE(Read(rfd, rb, len) == static_cast<int64_t>(len));
+    REQUIRE(std::string(rb, len) == msg);
     Close(rfd);
     Teardown();
 }

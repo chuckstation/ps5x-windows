@@ -1,12 +1,12 @@
-// PS5x – Process Manager unit tests (Phase 3)
+// ChuckStation5 – Process Manager unit tests (Phase 3)
 // SPDX-License-Identifier: MIT
 #include <catch2/catch_test_macros.hpp>
-#include "PS5x/Logger/Logger.h"
-#include "PS5x/Memory/Memory.h"
-#include "PS5x/KernelRuntime/KernelRuntime.h"
-#include "PS5x/Filesystem/Filesystem.h"
-#include "PS5x/Loader/Loader.h"
-#include "PS5x/Process/Process.h"
+#include "ChuckStation5/Logger/Logger.h"
+#include "ChuckStation5/Memory/Memory.h"
+#include "ChuckStation5/KernelRuntime/KernelRuntime.h"
+#include "ChuckStation5/Filesystem/Filesystem.h"
+#include "ChuckStation5/Loader/Loader.h"
+#include "ChuckStation5/Process/Process.h"
 
 #include <filesystem>
 #include <fstream>
@@ -18,7 +18,7 @@ namespace fs = std::filesystem;
 // Write a minimal valid ELF64 x86-64 ET_EXEC to a temp file
 static fs::path WriteTinyElf()
 {
-    auto path = fs::temp_directory_path() / "ps5x_proc_test.elf";
+    auto path = fs::temp_directory_path() / "chuckstation5_proc_test.elf";
 #pragma pack(push,1)
     struct Ehdr {
         uint8_t  e_ident[16]; uint16_t e_type,e_machine; uint32_t e_version;
@@ -47,28 +47,28 @@ static fs::path WriteTinyElf()
 
 static void Setup()
 {
-    PS5x::Logger::Init("", false, PS5x::Logger::Level::Off);
-    PS5x::Memory::Init();
-    PS5x::KernelRuntime::Init();
-    PS5x::Filesystem::Init();
-    PS5x::Loader::Init();
-    PS5x::Process::Init();
+    ChuckStation5::Logger::Init("", false, ChuckStation5::Logger::Level::Off);
+    ChuckStation5::Memory::Init();
+    ChuckStation5::KernelRuntime::Init();
+    ChuckStation5::Filesystem::Init();
+    ChuckStation5::Loader::Init();
+    ChuckStation5::Process::Init();
 }
 static void Teardown()
 {
-    PS5x::Process::Shutdown();
-    PS5x::Loader::Shutdown();
-    PS5x::Filesystem::Shutdown();
-    PS5x::KernelRuntime::Shutdown();
-    PS5x::Memory::Shutdown();
-    PS5x::Logger::Shutdown();
+    ChuckStation5::Process::Shutdown();
+    ChuckStation5::Loader::Shutdown();
+    ChuckStation5::Filesystem::Shutdown();
+    ChuckStation5::KernelRuntime::Shutdown();
+    ChuckStation5::Memory::Shutdown();
+    ChuckStation5::Logger::Shutdown();
 }
 
 // ── Tests ─────────────────────────────────────────────────────────────────
 
 TEST_CASE("Process – ProcessStateName coverage", "[proc]")
 {
-    using namespace PS5x::Process;
+    using namespace ChuckStation5::Process;
     REQUIRE(std::string(ProcessStateName(ProcessState::None))       == "None");
     REQUIRE(std::string(ProcessStateName(ProcessState::Running))    == "Running");
     REQUIRE(std::string(ProcessStateName(ProcessState::Terminated)) == "Terminated");
@@ -78,7 +78,7 @@ TEST_CASE("Process – ProcessStateName coverage", "[proc]")
 TEST_CASE("Process – GetCurrentPid returns 0 initially", "[proc]")
 {
     Setup();
-    REQUIRE(PS5x::Process::GetCurrentPid() == 0);
+    REQUIRE(ChuckStation5::Process::GetCurrentPid() == 0);
     Teardown();
 }
 
@@ -86,20 +86,20 @@ TEST_CASE("Process – Create returns valid PID for tiny ELF", "[proc]")
 {
     Setup();
     auto elfPath = WriteTinyElf();
-    auto contentDir = fs::temp_directory_path() / "ps5x_proc_content";
+    auto contentDir = fs::temp_directory_path() / "chuckstation5_proc_content";
     fs::create_directories(contentDir);
 
-    uint32_t pid = PS5x::Process::Create(elfPath, contentDir, "");
+    uint32_t pid = ChuckStation5::Process::Create(elfPath, contentDir, "");
     REQUIRE(pid != 0);
-    REQUIRE(PS5x::Process::GetState(pid) == PS5x::Process::ProcessState::Created);
-    REQUIRE(PS5x::Process::GetCurrentPid() == pid);
+    REQUIRE(ChuckStation5::Process::GetState(pid) == ChuckStation5::Process::ProcessState::Created);
+    REQUIRE(ChuckStation5::Process::GetCurrentPid() == pid);
 
-    auto info = PS5x::Process::GetInfo(pid);
+    auto info = ChuckStation5::Process::GetInfo(pid);
     REQUIRE(info.pid == pid);
     REQUIRE(!info.modules.empty());
     REQUIRE(info.modules[0].isMain);
 
-    PS5x::Process::Terminate(pid);
+    ChuckStation5::Process::Terminate(pid);
     fs::remove(elfPath);
     fs::remove_all(contentDir);
     Teardown();
@@ -108,7 +108,7 @@ TEST_CASE("Process – Create returns valid PID for tiny ELF", "[proc]")
 TEST_CASE("Process – Create fails for nonexistent ELF", "[proc]")
 {
     Setup();
-    uint32_t pid = PS5x::Process::Create("/no/such/file.elf", "", "");
+    uint32_t pid = ChuckStation5::Process::Create("/no/such/file.elf", "", "");
     REQUIRE(pid == 0);
     Teardown();
 }
@@ -116,8 +116,8 @@ TEST_CASE("Process – Create fails for nonexistent ELF", "[proc]")
 TEST_CASE("Process – GetState returns None for unknown PID", "[proc]")
 {
     Setup();
-    REQUIRE(PS5x::Process::GetState(9999) == PS5x::Process::ProcessState::None);
-    REQUIRE(!PS5x::Process::IsRunning(9999));
+    REQUIRE(ChuckStation5::Process::GetState(9999) == ChuckStation5::Process::ProcessState::None);
+    REQUIRE(!ChuckStation5::Process::IsRunning(9999));
     Teardown();
 }
 
@@ -128,20 +128,20 @@ TEST_CASE("Process – Start transitions state to Running", "[proc]")
     // The thread completion path is validated in test_kernel_runtime.cpp.
     Setup();
     auto elfPath = WriteTinyElf();
-    auto contentDir = fs::temp_directory_path() / "ps5x_proc_start";
+    auto contentDir = fs::temp_directory_path() / "chuckstation5_proc_start";
     fs::create_directories(contentDir);
 
-    uint32_t pid = PS5x::Process::Create(elfPath, contentDir, "");
+    uint32_t pid = ChuckStation5::Process::Create(elfPath, contentDir, "");
     REQUIRE(pid != 0);
-    REQUIRE(PS5x::Process::GetState(pid) == PS5x::Process::ProcessState::Created);
+    REQUIRE(ChuckStation5::Process::GetState(pid) == ChuckStation5::Process::ProcessState::Created);
 
-    REQUIRE(PS5x::Process::Start(pid));
+    REQUIRE(ChuckStation5::Process::Start(pid));
     // After Start(), state transitions to Running
-    auto state = PS5x::Process::GetState(pid);
-    REQUIRE((state == PS5x::Process::ProcessState::Running ||
-             state == PS5x::Process::ProcessState::Terminated));
+    auto state = ChuckStation5::Process::GetState(pid);
+    REQUIRE((state == ChuckStation5::Process::ProcessState::Running ||
+             state == ChuckStation5::Process::ProcessState::Terminated));
 
-    PS5x::Process::Terminate(pid);
+    ChuckStation5::Process::Terminate(pid);
     fs::remove(elfPath);
     fs::remove_all(contentDir);
     Teardown();
@@ -151,18 +151,18 @@ TEST_CASE("Process – GetModules returns loaded module list", "[proc]")
 {
     Setup();
     auto elfPath = WriteTinyElf();
-    auto contentDir = fs::temp_directory_path() / "ps5x_proc_mods";
+    auto contentDir = fs::temp_directory_path() / "chuckstation5_proc_mods";
     fs::create_directories(contentDir);
 
-    uint32_t pid = PS5x::Process::Create(elfPath, contentDir, "");
+    uint32_t pid = ChuckStation5::Process::Create(elfPath, contentDir, "");
     REQUIRE(pid != 0);
 
-    auto mods = PS5x::Process::GetModules(pid);
+    auto mods = ChuckStation5::Process::GetModules(pid);
     REQUIRE(mods.size() == 1);
     REQUIRE(mods[0].isMain);
     REQUIRE(mods[0].name == elfPath.filename().string());
 
-    PS5x::Process::Terminate(pid);
+    ChuckStation5::Process::Terminate(pid);
     fs::remove(elfPath);
     fs::remove_all(contentDir);
     Teardown();
@@ -174,18 +174,18 @@ TEST_CASE("Process – ExitCallback fires on termination", "[proc]")
     bool callbackFired = false;
     uint32_t cbPid = 0; int cbCode = -1;
 
-    PS5x::Process::RegisterExitCallback([&](uint32_t pid, int code){
+    ChuckStation5::Process::RegisterExitCallback([&](uint32_t pid, int code){
         callbackFired = true;
         cbPid = pid; cbCode = code;
     });
 
     auto elfPath = WriteTinyElf();
-    auto contentDir = fs::temp_directory_path() / "ps5x_proc_cb";
+    auto contentDir = fs::temp_directory_path() / "chuckstation5_proc_cb";
     fs::create_directories(contentDir);
 
-    uint32_t pid = PS5x::Process::Create(elfPath, contentDir, "");
+    uint32_t pid = ChuckStation5::Process::Create(elfPath, contentDir, "");
     REQUIRE(pid != 0);
-    PS5x::Process::Terminate(pid);
+    ChuckStation5::Process::Terminate(pid);
 
     REQUIRE(callbackFired);
     REQUIRE(cbPid == pid);
@@ -199,11 +199,11 @@ TEST_CASE("Process – RequestExit transitions state", "[proc]")
 {
     Setup();
     auto elfPath = WriteTinyElf();
-    uint32_t pid = PS5x::Process::Create(elfPath, "", "");
+    uint32_t pid = ChuckStation5::Process::Create(elfPath, "", "");
     REQUIRE(pid != 0);
-    REQUIRE(PS5x::Process::RequestExit(pid, 1));
-    REQUIRE(PS5x::Process::GetState(pid) == PS5x::Process::ProcessState::Exiting);
-    PS5x::Process::Terminate(pid);
+    REQUIRE(ChuckStation5::Process::RequestExit(pid, 1));
+    REQUIRE(ChuckStation5::Process::GetState(pid) == ChuckStation5::Process::ProcessState::Exiting);
+    ChuckStation5::Process::Terminate(pid);
     fs::remove(elfPath);
     Teardown();
 }
